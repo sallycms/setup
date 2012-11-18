@@ -1,0 +1,117 @@
+<?php
+/*
+ * Copyright (c) 2012, webvariants GbR, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml');
+
+?>
+<form class="form-horizontal">
+	<fieldset>
+		<legend>Willkommen</legend>
+
+		<p>
+			Dieser Assistent führt Sie durch die notwendigen Schritte, um ein
+			SallyCMS-Projekt zu installieren. Füllen Sie alle Angaben aus, um
+			im zweiten Schritt die Datenbank und erste Nutzerkonten einzurichten.
+		</p>
+	</fieldset>
+
+	<fieldset>
+		<legend>Allgemeine Angaben</legend>
+
+		<div class="control-group">
+			<label class="control-label" for="inputEmail">Projektname:</label>
+			<div class="controls">
+				<input type="text" id="inputEmail" placeholder="Mein Projekt">
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="inputPassword">Zeitzone:</label>
+			<div class="controls">
+				<input type="text" id="inputPassword" placeholder="Europe/Berlin">
+			</div>
+		</div>
+
+		<div class="control-group">
+			<div class="controls">
+				<span class="badge badge-success"><i class="icon-ok icon-white"></i> PHP 5.4</span>
+				<span class="badge badge-success"><i class="icon-ok icon-white"></i> 120s</span>
+				<span class="badge badge-warning"><i class="icon-exclamation-sign icon-white"></i> 32 MB</span>
+				<span class="badge badge-success"><i class="icon-ok icon-white"></i> safe mode</span>
+				<span class="badge badge-important"><i class="icon-remove icon-white"></i> open basedir</span>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<div class="controls">
+				<label class="checkbox">
+					<input type="checkbox"> Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.
+				</label>
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>Datenbank-Zugang <span class="pull-right" style="font-size:14px">(<a href="foo">erweiterte Konfiguration anzeigen</a>)</span></legend>
+
+		<div class="control-group">
+			<label class="control-label" for="inputPassword">Benutzer &amp; Passwort:</label>
+			<div class="controls controls-row">
+				<input type="text" id="inputPassword" placeholder="username" class="span3">
+				<input type="text" id="inputPassword" placeholder="mypassword" class="span3">
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="inputPassword">Datenbank:</label>
+			<div class="controls controls-row">
+				<input type="text" id="inputPassword" placeholder="mydatabase" class="span3">
+				<label class="checkbox span2">
+					<input type="checkbox"> anlegen
+				</label>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="tablePrefix">Tabellen-Präfix:</label>
+			<div class="controls">
+				<input type="text" id="tablePrefix" placeholder="sly_" class="span1" title="muss i.d.R. nicht geändert werden; erlaubt es, mehrere Projekte in einer Datenbank zu verwalten" rel="tooltip" data-placement="right" data-trigger="focus" />
+			</div>
+		</div>
+
+		<div class="control-group" style="display:none">
+			<label class="control-label" for="inputEmail">Datenbank-Typ:</label>
+			<div class="controls">
+				<select title="Alle Datenbanken außer MySQL sind als hoch experimentell anzusehen und dienen zu Testzwecken!" rel="tooltip" data-placement="right" data-trigger="focus">
+					<option>MySQL</option>
+					<option>2</option>
+					<option>3</option>
+					<option>4</option>
+					<option>5</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="control-group" style="display:none">
+			<label class="control-label" for="inputPassword">Host:</label>
+			<div class="controls">
+				<input type="text" id="inputPassword" placeholder="localhost">
+			</div>
+		</div>
+
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Zum nächsten Schritt &raquo;</button>
+		</div>
+	</fieldset>
+</form>
+
+<script type="text/javascript">
+jQuery('[rel=tooltip]').tooltip();
+</script>

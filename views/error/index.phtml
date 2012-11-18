@@ -1,0 +1,33 @@
+<?php
+/*
+ * Copyright (c) 2012, webvariants GbR, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+$showTrace = false;
+$response  = sly_Core::getResponse();
+
+if ($e instanceof sly_Controller_Exception) {
+	if ($e->getCode() === 404) $response->setStatusCode(404);
+	$title = t('controller_error');
+}
+else {
+	$response->setStatusCode(500);
+
+	$title     = t('unexpected_exception');
+	$showTrace = sly_Core::isDeveloperMode();
+}
+
+?>
+<div class="alert alert-error">
+	<h4><?php print sly_html($title) ?></h4>
+	<?php print sly_html($e->getMessage()) ?>
+</div>
+
+<?php if ($showTrace): ?>
+<pre class="prescrollable"><?php print sly_html($e->getTraceAsString()) ?></pre>
+<?php endif ?>
