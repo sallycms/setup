@@ -1,0 +1,19 @@
+lang: Deutsch
+compatible_but_old: 'Empfehlung: {0}'
+requires_at_least: 'Mindestanforderung: {0}'
+exec_time: '{0}s, änderbar'
+memory: '{0}MB, änderbar'
+disabled: deaktiviert
+welcome: Willkommen
+intro: |
+  Dieser Assistent führt Sie durch die notwendigen Schritte, um ein
+  SallyCMS-Projekt zu installieren. Füllen Sie alle Angaben aus, um
+  im zweiten Schritt die Datenbank und erste Nutzerkonten einzurichten.
+general_config: Allgemeine Angaben
+projectname: Projektname
+timezone: Zeitzone
+configure: Konfigurieren
+setup: Einrichten
+profit: Profit!
+read_license: 'Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.'
+database_access: Datenbank-Zugang

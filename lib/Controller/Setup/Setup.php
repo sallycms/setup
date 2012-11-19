@@ -10,19 +10,9 @@
 
 class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sly_Controller_Interface {
 	protected $flash;
-	protected $lang;
-
-	private $init = false;
 
 	protected function init() {
-		if ($this->init) return;
-
-		$request     = $this->getRequest();
 		$this->flash = sly_Core::getFlashMessage();
-		$this->init  = true;
-		$this->lang  = $request->request('lang', 'string');
-
-		sly_Core::getI18N()->appendFile(SLY_SALLYFOLDER.'/backend/lang/pages/setup/');
 	}
 
 	public function indexAction()	{
@@ -35,23 +25,84 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		if (!$config->has('DEFAULT_LOCALE')) {
 			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
 			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
-			$this->getContainer()->getI18N()->setLocale($config->get('DEFAULT_LOCALE'));
 		}
 
-		$languages = sly_I18N::getLocales(SLY_SALLYFOLDER.'/backend/lang');
-
-		// forward if only one locale available
-		if (count($languages) === 1) {
-			$params = array('func' => 'license', 'lang' => reset($languages));
-			sly_Core::getCurrentApp()->redirect('setup', $params);
-		}
-
-		$this->render('setup/index.phtml', array(), false);
+		$this->configView();
 	}
 
-	public function licenseAction() {
-		$this->init();
-		$this->render('setup/license.phtml', array(), false);
+	protected function configView() {
+		$tester   = new sly_Util_Requirements();
+		$config   = $this->getContainer()->getConfig();
+		$database = $config->get('DATABASE');
+		$errors   = false;
+		$params   = array(
+			'projectName' => $config->get('PROJECTNAME'),
+			'timezone'    => $config->get('TIMEZONE'),
+			'database'    => array(
+				'driver'   => $database['DRIVER'],
+				'host'     => $database['HOST'],
+				'user'     => $database['LOGIN'],
+				'password' => $database['PASSWORD'],
+				'name'     => $database['NAME'],
+				'prefix'   => $database['TABLE_PREFIX'],
+				'valid'    => $this->isValidDatabase($database)
+			)
+		);
+
+		$results['version']      = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
+		$results['time_limit']   = array('20s', '60s', $tester->execTime(20, 60));
+		$results['mem_limit']    = array('16MB', '64MB', $tester->memoryLimit(16, 64));
+		$results['safe_mode']    = array(t('disabled'), t('disabled'), $tester->safeMode());
+		$results['open_basedir'] = array(t('disabled'), t('disabled'), $tester->openBasedir());
+
+		foreach ($results as $result) {
+			$errors |= $result[2]['status'] === sly_Util_Requirements::FAILED;
+		}
+
+		$params['errors']  = $errors;
+		$params['results'] = $results;
+
+		$this->render('setup/index.phtml', $params, false);
+	}
+
+	public function isValidDatabase(array $config) {
+		return false;
+	}
+
+	protected function getBadge(array $testResult, $text = null, $showRange = true) {
+		if ($text === null) $text = $testResult[2]['text'];
+
+		switch ($testResult[2]['status']) {
+			case sly_Util_Requirements::OK:
+				$cls     = 'success';
+				$icon    = 'ok';
+				$tooltip = null;
+				break;
+
+			case sly_Util_Requirements::WARNING:
+				$cls     = 'warning';
+				$icon    = 'exclamation-sign';
+				$tooltip = $showRange ? t('compatible_but_old', $testResult[1]) : null;
+				break;
+
+			case sly_Util_Requirements::FAILED:
+				$cls     = 'important';
+				$icon    = 'remove';
+				$tooltip = $showRange ? t('requires_at_least', $testResult[0]) : null;
+				break;
+		}
+
+		if ($tooltip) {
+			return sprintf(
+				'<span class="badge badge-%s" rel="tooltip" title="%s" data-placement="bottom"><i class="icon-%s icon-white"></i> %s</span>',
+				$cls, sly_html($tooltip), $icon, sly_html($text)
+			);
+		}
+
+		return sprintf(
+			'<span class="badge badge-%s"><i class="icon-%s icon-white"></i> %s</span>',
+			$cls, $icon, sly_html($text)
+		);
 	}
 
 	public function syscheckAction() {
@@ -61,20 +112,8 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$sysErrors = false;
 		$warnings  = false;
 		$results   = array();
-		$tester    = new sly_Util_Requirements();
-		$level     = error_reporting(0);
-
-		$results['php_version']    = array('5.2', '5.4', $tester->phpVersion());
-		$results['php_time_limit'] = array('20s', '60s', $tester->execTime());
-		$results['php_mem_limit']  = array('16MB', '32MB', $tester->memoryLimit());
-		$results['php_pseudo']     = array('translate:none', 'translate:none', $tester->nonsenseSecurity());
 
 		error_reporting($level);
-
-		foreach ($results as $result) {
-			$errors   |= $result[2]['status'] === sly_Util_Requirements::FAILED;
-			$warnings |= $result[2]['status'] === sly_Util_Requirements::WARNING;
-		}
 
 		$sysErrors = $errors;
 
@@ -368,11 +407,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$this->render('setup/finish.phtml', array(), false);
 	}
 
-	protected function title($title) {
-		$layout = sly_Core::getLayout();
-		$layout->pageHeader($title);
-	}
-
 	protected function checkDirsAndFiles() {
 		$s         = DIRECTORY_SEPARATOR;
 		$errors    = array();
@@ -392,10 +426,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 		error_reporting($level);
 		return $errors;
-	}
-
-	protected function printHiddens($form) {
-		$form->addHiddenValue('lang', $this->lang);
 	}
 
 	protected function setupImport($sqlScript) {
@@ -418,6 +448,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	public function checkPermission($action) {
-		return sly_Core::isSetup();
+		return true;
 	}
 }

@@ -22,7 +22,7 @@ class sly_Router_Setup extends sly_Router_Base {
 
 		$this->app = $app;
 
-		$this->addRoute('/:action/?', array());
+		$this->addRoute('/:action/?', array('controller' => 'setup'));
 	}
 
 	public function getUrl($action = 'index', $params = '', $sep = '&amp;') {

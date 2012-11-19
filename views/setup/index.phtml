@@ -10,56 +10,55 @@
 
 print $this->render('layout/navigation.phtml');
 
+$badges = array(
+	'version'     => $this->getBadge($results['version'], 'PHP '.PHP_VERSION),
+	'timeLimit'   => $this->getBadge($results['time_limit']),
+	'memLimit'    => $this->getBadge($results['mem_limit']),
+	'safeMode'    => $this->getBadge($results['safe_mode'], 'safe_mode'),
+	'openBasedir' => $this->getBadge($results['open_basedir'], 'open_basedir')
+);
+
 ?>
 <form class="form-horizontal">
 	<fieldset>
-		<legend>Willkommen</legend>
-
-		<p>
-			Dieser Assistent führt Sie durch die notwendigen Schritte, um ein
-			SallyCMS-Projekt zu installieren. Füllen Sie alle Angaben aus, um
-			im zweiten Schritt die Datenbank und erste Nutzerkonten einzurichten.
-		</p>
+		<legend><?php print t('welcome') ?></legend>
+		<p><?php print t('intro') ?></p>
 	</fieldset>
 
 	<fieldset>
-		<legend>Allgemeine Angaben</legend>
+		<legend><?php print t('general_config') ?></legend>
 
 		<div class="control-group">
-			<label class="control-label" for="inputEmail">Projektname:</label>
+			<label class="control-label" for="projectName"><?php print t('projectname') ?>:</label>
 			<div class="controls">
-				<input type="text" id="inputEmail" placeholder="Mein Projekt">
+				<input type="text" id="projectName" name="projectName" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
 			</div>
 		</div>
 
 		<div class="control-group">
-			<label class="control-label" for="inputPassword">Zeitzone:</label>
+			<label class="control-label" for="timezone"><?php print t('timezone') ?>:</label>
 			<div class="controls">
-				<input type="text" id="inputPassword" placeholder="Europe/Berlin">
+				<input type="text" id="timezone" placeholder="Europe/Berlin" />
 			</div>
 		</div>
 
 		<div class="control-group">
 			<div class="controls">
-				<span class="badge badge-success"><i class="icon-ok icon-white"></i> PHP 5.4</span>
-				<span class="badge badge-success"><i class="icon-ok icon-white"></i> 120s</span>
-				<span class="badge badge-warning"><i class="icon-exclamation-sign icon-white"></i> 32 MB</span>
-				<span class="badge badge-success"><i class="icon-ok icon-white"></i> safe mode</span>
-				<span class="badge badge-important"><i class="icon-remove icon-white"></i> open basedir</span>
+				<?php print implode("\n", $badges); ?>
 			</div>
 		</div>
 
 		<div class="control-group">
 			<div class="controls">
 				<label class="checkbox">
-					<input type="checkbox"> Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.
+					<input type="checkbox"> <?php print t('read_license') ?>
 				</label>
 			</div>
 		</div>
 	</fieldset>
 
 	<fieldset>
-		<legend>Datenbank-Zugang <span class="pull-right" style="font-size:14px">(<a href="foo">erweiterte Konfiguration anzeigen</a>)</span></legend>
+		<legend><?php print t('database_access') ?> <span class="pull-right" style="font-size:14px">(<a href="foo">erweiterte Konfiguration anzeigen</a>)</span></legend>
 
 		<div class="control-group">
 			<label class="control-label" for="inputPassword">Benutzer &amp; Passwort:</label>

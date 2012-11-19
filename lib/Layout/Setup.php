@@ -12,8 +12,6 @@
  * @ingroup layout
  */
 class sly_Layout_Setup extends sly_Layout_XHTML5 {
-	private $router;
-
 	public function __construct(sly_I18N $i18n, sly_Request $request) {
 		$locale = $i18n->getLocale();
 		$base   = $request->getBaseUrl(true).'/';
@@ -37,10 +35,6 @@ class sly_Layout_Setup extends sly_Layout_XHTML5 {
 		}
 	}
 
-	public function setRouter(sly_Router_Base $router) {
-		$this->router = $router;
-	}
-
 	public function printHeader() {
 		parent::printHeader();
 		print $this->renderView('top.phtml');
@@ -56,17 +50,5 @@ class sly_Layout_Setup extends sly_Layout_XHTML5 {
 		if (file_exists($full)) return $full;
 
 		return parent::getViewFile($file);
-	}
-
-	/**
-	 * @param  string $filename
-	 * @param  array  $params
-	 * @return string
-	 */
-	protected function renderView($filename, $params = array()) {
-		// make router available to all controller views
-		$params = array_merge(array('_router' => $this->router), $params);
-
-		return parent::renderView($filename, $params);
 	}
 }

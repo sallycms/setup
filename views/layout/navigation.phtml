@@ -7,17 +7,22 @@
  *
  * http://www.opensource.org/licenses/mit-license.php
  */
-?>
-<ul class="nav nav-pills" style="margin-left:190px">
-	<li class="active"><a href="<?php print $_router->getUrl('index') ?>" data-toggle="tab"><i class="icon-edit"></i> Konfigurieren</a></li>
-	<li class="disabled"><a href="">&raquo;</a></li>
-	<li class="disabled"><a href="<?php print $_router->getUrl('install') ?>"><i class="icon-wrench"></i> Einrichten</a></li>
-	<li class="disabled"><a href="">&raquo;</a></li>
-	<li class="active"><a href="#tab3"><i class="icon-heart"></i> Profit!</a></li>
-</ul>
 
-<div class="tab-content">
-	<div class="tab-pane">
-		1
-	</div>
+$locale = sly_Core::getI18N();
+
+?>
+<div class="btn-group pull-right">
+	<button class="btn btn-mini dropdown-toggle" data-toggle="dropdown"><?php print ht('lang') ?> <span class="caret"></span></button>
+	<ul class="dropdown-menu">
+		<li><a href="<?php print $_router->getUrl(null) ?>?locale=de_de"><i class="icon-flag"></i> Deutsch</a></li>
+		<li><a href="<?php print $_router->getUrl(null) ?>?locale=en_gb"><i class="icon-flag"></i> English</a></li>
+	</ul>
 </div>
+
+<ul class="nav nav-pills">
+	<li class="active"><a href="<?php print $_router->getUrl('index') ?>"><i class="icon-edit"></i> <?php print ht('configure') ?></a></li>
+	<li class="disabled separator">&raquo;</li>
+	<li class="disabled"><a href="<?php print $_router->getUrl('install') ?>"><i class="icon-wrench"></i> <?php print ht('setup') ?></a></li>
+	<li class="disabled separator">&raquo;</li>
+	<li class="disabled"><a href="#"><i class="icon-heart"></i> <?php print ht('profit') ?></a></li>
+</ul>
