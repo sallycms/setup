@@ -30,37 +30,26 @@ class sly_App_Setup extends sly_App_Base {
 		$this->request = $container->getRequest();
 
 		// init the current language
-		$this->initLanguage($container, $this->request);
+		$container->setCurrentLanguageId(sly_Core::getDefaultClangId());
 
-		// init timezone and locale
-		$this->initUserSettings();
+		// set timezone
+		$this->initTimezone();
+
+		// init locale
+		$this->initLocale($container);
 
 		// make sure our layout is used later on
 		$this->initLayout($container);
-
-		// instantiate asset service before addOns are loaded to make sure
-		// the CSS processing is first in the line for CSS files
-		$container->getAssetService();
 	}
 
 	/**
-	 * Run the backend app
+	 * Run the setup app
 	 *
-	 * This will perform the routing, check the controller, load and execute it
-	 * and send the response including the layout to the client.
+	 * This will perform execute the setup controller and send its response.
 	 */
 	public function run() {
-		try {
-			// resolve URL and find controller
-			$this->performRouting($this->request);
-		}
-		catch (sly_Controller_Exception $e) {
-			$this->controller = new sly_Controller_Error($e);
-			$this->action     = 'index';
-		}
-
-		// set the appropriate page ID
-		$this->updateLayout();
+		// resolve URL and find controller
+		$this->performRouting($this->request);
 
 		// do it, baby
 		$dispatcher = $this->getDispatcher();
@@ -115,31 +104,44 @@ class sly_App_Setup extends sly_App_Base {
 		return $this->dispatcher;
 	}
 
-	protected function initLanguage(sly_Container $container, sly_Request $request) {
-		// the following article API calls require to know a language
-		$container->setCurrentLanguageId(sly_Core::getDefaultClangId());
-	}
+	protected function initLocale(sly_Container $container) {
+		sly_Util_Session::start();
 
-	protected function initUserSettings() {
-		$container = $this->getContainer();
+		// explicit locale in query string?
+		$request = $container->getRequest();
+		$locale  = $request->get('locale', 'string');
+		$locales = sly_I18N::getLocales(SLY_SALLYFOLDER.'/backend/lang');
+		$session = $container->getSession();
 
-		// set timezone
-		$this->setDefaultTimezone();
+		if (empty($locale) || !in_array($locale, $locales)) {
+			// session locale?
+			$locale = $session->get('locale', 'string');
 
-		$locale        = sly_Core::getDefaultLocale();
-		$locales       = sly_I18N::getLocales(SLY_SALLYFOLDER.'/backend/lang');
-		$requestLocale = $this->request->request('lang', 'string', '');
-		$user          = null;
+			if (empty($locale)) {
+				// get best locale based on Accept-Language header
+				$locale  = sly_Core::getDefaultLocale();
+				$accept  = $request->getLanguages();
 
-		if (in_array($requestLocale, $locales)) {
-			$locale = $requestLocale;
+				foreach ($accept as $l) {
+					$l = strtolower($l);
+
+					if (in_array($l, $locales)) {
+						$locale = $l;
+						break;
+					}
+				}
+			}
 		}
 
+		// remember the chosen locale
+		$session->set('locale', $locale);
+
 		// set the i18n object
-		$this->initI18N($container, $locale);
+		$i18n = new sly_I18N($locale, SLY_SALLYFOLDER.'/setup/lang');
+		$container->setI18N($i18n);
 	}
 
-	protected function setDefaultTimezone() {
+	protected function initTimezone() {
 		$timezone = @date_default_timezone_get();
 
 		// fix badly configured servers where the get function doesn't even return a guessed default timezone
@@ -158,22 +160,12 @@ class sly_App_Setup extends sly_App_Base {
 		$container->setLayout(new sly_Layout_Setup($i18n, $request));
 	}
 
-	protected function initI18N(sly_Container $container, $locale) {
-		$i18n = new sly_I18N($locale, SLY_SALLYFOLDER.'/setup/lang');
-		$container->setI18N($i18n);
-	}
-
 	protected function getControllerFromRequest(sly_Request $request) {
 		return 'setup';
 	}
 
 	protected function getActionFromRequest(sly_Request $request) {
 		return $this->router->getActionFromRequest($request);
-	}
-
-	protected function updateLayout() {
-		$layout = $this->getContainer()->getLayout();
-		$layout->setRouter($this->getRouter());
 	}
 
 	protected function prepareRouter(sly_Container $container) {
