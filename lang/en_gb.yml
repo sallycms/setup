@@ -17,3 +17,12 @@ setup: Setup
 profit: Profit!
 read_license: 'I have read the <a href="">MIT license</a> and accept its terms.'
 database_access: Database Access
+please_fix_problems_to_continue: Setup cannot continue due to the problems above. Please review the server's configuration and fix any outstanding issues in order to proceed.
+non_mysql_is_experimental: All drivers except for MySQL are highly experimental and only for testing purposes.
+host_and_driver: 'Host &amp; Database Type'
+username_and_password: 'Username &amp; Password'
+database: Database
+create: create
+table_prefix: Table Prefix
+table_prefix_help: 'does not need to be changed in most cases; allows for multiple projects in one database'
+next_step: 'Proceed with next step  &raquo;'

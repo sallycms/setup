@@ -19,7 +19,7 @@ $badges = array(
 );
 
 ?>
-<form class="form-horizontal">
+<form class="form-horizontal" action="<?php print $_router->getUrl('saveconfig') ?>" method="post">
 	<fieldset>
 		<legend><?php print t('welcome') ?></legend>
 		<p><?php print t('intro') ?></p>
@@ -29,9 +29,9 @@ $badges = array(
 		<legend><?php print t('general_config') ?></legend>
 
 		<div class="control-group">
-			<label class="control-label" for="projectName"><?php print t('projectname') ?>:</label>
+			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
 			<div class="controls">
-				<input type="text" id="projectName" name="projectName" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
+				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
 			</div>
 		</div>
 
@@ -48,66 +48,67 @@ $badges = array(
 			</div>
 		</div>
 
+		<?php if ($errors): ?>
+		<div class="alert alert-error">
+		<?php print t('please_fix_problems_to_continue') ?>
+		</div>
+		<?php else: ?>
+
 		<div class="control-group">
 			<div class="controls">
 				<label class="checkbox">
-					<input type="checkbox"> <?php print t('read_license') ?>
+					<input type="checkbox" name="license" value="1" /> <?php print t('read_license') ?>
 				</label>
 			</div>
 		</div>
 	</fieldset>
 
 	<fieldset>
-		<legend><?php print t('database_access') ?> <span class="pull-right" style="font-size:14px">(<a href="foo">erweiterte Konfiguration anzeigen</a>)</span></legend>
+		<legend><?php print t('database_access') ?></legend>
 
 		<div class="control-group">
-			<label class="control-label" for="inputPassword">Benutzer &amp; Passwort:</label>
+			<label class="control-label" for="host"><?php print t('host_and_driver') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" id="inputPassword" placeholder="username" class="span3">
-				<input type="text" id="inputPassword" placeholder="mypassword" class="span3">
+				<input type="text" name="host" id="host" placeholder="localhost" class="span3" value="<?php print sly_html($database['host']) ?>" />
+
+				<select name="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
+					<option value="mysql">MySQL</option>
+					<option>SQLite</option>
+					<option>PostgreSQL</option>
+					<option>Oracle</option>
+				</select>
 			</div>
 		</div>
 
 		<div class="control-group">
-			<label class="control-label" for="inputPassword">Datenbank:</label>
+			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" id="inputPassword" placeholder="mydatabase" class="span3">
+				<input type="text" name="username" id="username" value="<?php print sly_html($database['username']) ?>" placeholder="username" class="span3" />
+				<input type="text" name="password" id="password" value="<?php print sly_html($database['password']) ?>" placeholder="mypassword" class="span3" />
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="database"><?php print t('database') ?>:</label>
+			<div class="controls controls-row">
+				<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" placeholder="mydatabase" class="span3">
 				<label class="checkbox span2">
-					<input type="checkbox"> anlegen
+					<input type="checkbox" name="create" value="1" /> <?php print t('create') ?>
 				</label>
 			</div>
 		</div>
 
 		<div class="control-group">
-			<label class="control-label" for="tablePrefix">Tabellen-Präfix:</label>
+			<label class="control-label" for="prefix"><?php print t('table_prefix') ?>:</label>
 			<div class="controls">
-				<input type="text" id="tablePrefix" placeholder="sly_" class="span1" title="muss i.d.R. nicht geändert werden; erlaubt es, mehrere Projekte in einer Datenbank zu verwalten" rel="tooltip" data-placement="right" data-trigger="focus" />
-			</div>
-		</div>
-
-		<div class="control-group" style="display:none">
-			<label class="control-label" for="inputEmail">Datenbank-Typ:</label>
-			<div class="controls">
-				<select title="Alle Datenbanken außer MySQL sind als hoch experimentell anzusehen und dienen zu Testzwecken!" rel="tooltip" data-placement="right" data-trigger="focus">
-					<option>MySQL</option>
-					<option>2</option>
-					<option>3</option>
-					<option>4</option>
-					<option>5</option>
-				</select>
-			</div>
-		</div>
-
-		<div class="control-group" style="display:none">
-			<label class="control-label" for="inputPassword">Host:</label>
-			<div class="controls">
-				<input type="text" id="inputPassword" placeholder="localhost">
+				<input type="text" name="prefix" id="prefix" placeholder="sly_" class="span1" title="<?php print t('table_prefix_help') ?>" rel="tooltip" data-placement="right" data-trigger="focus" />
 			</div>
 		</div>
 
 		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Zum nächsten Schritt &raquo;</button>
+			<button type="submit" class="btn btn-primary"><?php print t('next_step') ?></button>
 		</div>
+		<?php endif ?>
 	</fieldset>
 </form>
 
