@@ -15,6 +15,10 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$this->flash = sly_Core::getFlashMessage();
 	}
 
+	public function checkPermission($action) {
+		return true;
+	}
+
 	public function indexAction()	{
 		$this->init();
 
@@ -31,203 +35,87 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	protected function configView() {
-		$tester   = new sly_Util_Requirements();
 		$config   = $this->getContainer()->getConfig();
 		$database = $config->get('DATABASE');
-		$errors   = false;
 		$params   = array(
 			'projectName' => $config->get('PROJECTNAME'),
 			'timezone'    => $config->get('TIMEZONE'),
+			'errors'      => false,
 			'database'    => array(
 				'driver'   => $database['DRIVER'],
 				'host'     => $database['HOST'],
-				'user'     => $database['LOGIN'],
+				'username' => $database['LOGIN'],
 				'password' => $database['PASSWORD'],
 				'name'     => $database['NAME'],
-				'prefix'   => $database['TABLE_PREFIX'],
-				'valid'    => $this->isValidDatabase($database)
+				'prefix'   => $database['TABLE_PREFIX']
 			)
 		);
 
-		$results['version']      = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
-		$results['time_limit']   = array('20s', '60s', $tester->execTime(20, 60));
-		$results['mem_limit']    = array('16MB', '64MB', $tester->memoryLimit(16, 64));
-		$results['safe_mode']    = array(t('disabled'), t('disabled'), $tester->safeMode());
-		$results['open_basedir'] = array(t('disabled'), t('disabled'), $tester->openBasedir());
-
-		foreach ($results as $result) {
-			$errors |= $result[2]['status'] === sly_Util_Requirements::FAILED;
-		}
-
-		$params['errors']  = $errors;
-		$params['results'] = $results;
+		$params = $this->checkSystem($params);
+		$params = $this->checkDirectories($params);
+		$params = $this->checkHttpAccess($params);
 
 		$this->render('setup/index.phtml', $params, false);
 	}
 
-	public function isValidDatabase(array $config) {
-		return false;
-	}
-
-	protected function getBadge(array $testResult, $text = null, $showRange = true) {
-		if ($text === null) $text = $testResult[2]['text'];
-
-		switch ($testResult[2]['status']) {
-			case sly_Util_Requirements::OK:
-				$cls     = 'success';
-				$icon    = 'ok';
-				$tooltip = null;
-				break;
-
-			case sly_Util_Requirements::WARNING:
-				$cls     = 'warning';
-				$icon    = 'exclamation-sign';
-				$tooltip = $showRange ? t('compatible_but_old', $testResult[1]) : null;
-				break;
-
-			case sly_Util_Requirements::FAILED:
-				$cls     = 'important';
-				$icon    = 'remove';
-				$tooltip = $showRange ? t('requires_at_least', $testResult[0]) : null;
-				break;
-		}
-
-		if ($tooltip) {
-			return sprintf(
-				'<span class="badge badge-%s" rel="tooltip" title="%s" data-placement="bottom"><i class="icon-%s icon-white"></i> %s</span>',
-				$cls, sly_html($tooltip), $icon, sly_html($text)
-			);
-		}
-
-		return sprintf(
-			'<span class="badge badge-%s"><i class="icon-%s icon-white"></i> %s</span>',
-			$cls, $icon, sly_html($text)
-		);
-	}
-
-	public function syscheckAction() {
+	public function saveconfigAction() {
 		$this->init();
 
-		$errors    = false;
-		$sysErrors = false;
-		$warnings  = false;
-		$results   = array();
-
-		error_reporting($level);
-
-		$sysErrors = $errors;
-
-		// init directories
-
-		$cantCreate = $this->checkDirsAndFiles();
-		$protected  = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.'/internal');
-		$protects   = array();
-
-		foreach ($protected as $i => $directory) {
-			if (!sly_Util_Directory::createHttpProtected($directory)) {
-				$protects[] = realpath($directory);
-				$errors = true;
-			}
-		}
-
-		if (!empty($cantCreate)) {
-			$errors = true;
-		}
-
-		// forward if OK
-		if (!$errors && !$warnings) {
-			return $this->dbconfigAction();
-		}
-
-		$params = compact('sysErrors', 'results', 'protects', 'errors', 'cantCreate', 'tester');
-		$this->render('setup/syscheck.phtml', $params, false);
-	}
-
-	public function dbconfigAction() {
-		$this->init();
-
-		$config  = sly_Core::config();
-		$data    = $config->get('DATABASE');
 		$request = $this->getRequest();
-		$isSent  = $request->isMethod('POST');
+
+		// allow only POST requests
+		if (!$request->isMethod('POST')) {
+			return $this->redirectResponse();
+		}
+
+		// check for any available database drivers
 		$drivers = sly_DB_PDO_Driver::getAvailable();
 
 		if (empty($drivers)) {
 			$this->flash->appendWarning(t('setup_no_drivers_available'));
-			$sent = false;
+			return $this->configView();
 		}
 
-		if ($isSent) {
-			$TABLE_PREFIX = $request->post('prefix', 'string');
-			$HOST         = $request->post('host', 'string');
-			$LOGIN        = $request->post('user', 'string');
-			$PASSWORD     = $request->post('pass', 'string');
-			$NAME         = $request->post('dbname', 'string');
-			$DRIVER       = $request->post('driver', 'string');
-			$create       = $request->post('create_db', 'bool') && ($DRIVER !== 'sqlite' && $DRIVER !== 'oci');
+		// retrieve general config
+		$projectName = $request->post('projectname', 'string', '');
+		$timezone    = $request->post('timezone', 'string', 'UTC');
 
-			try {
-				if (!in_array($DRIVER, $drivers)) {
-					throw new sly_Exception(t('setup_invalid_driver'));
-				}
+		// retrieve database config
+		$driver   = $request->post('driver', 'string', 'mysql');
+		$host     = $request->post('host', 'string', 'localhost');
+		$login    = $request->post('username', 'string', '');
+		$password = $request->post('password', 'string', '');
+		$name     = $request->post('database', 'string', '');
+		$prefix   = $request->post('prefix', 'string', 'sly_');
+		$create   = $request->post('create', 'bool') && ($driver !== 'sqlite' && $driver !== 'oci');
+		$dbConfig = array(
+			'DRIVER'       => $driver,
+			'HOST'         => $host,
+			'LOGIN'        => $login,
+			'PASSWORD'     => $password,
+			'NAME'         => $name,
+			'TABLE_PREFIX' => $prefix
+		);
 
-				// open connection
+		// create system ID
+		$systemID = sha1(sly_Util_Password::getRandomData(40));
+		$systemID = substr($systemID, 0, 20);
 
-				if ($create) {
-					$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
-				}
-				else {
-					$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
-				}
+		// save new config values
+		$config = $this->getContainer()->getConfig();
+		$config->set('PROJECTNAME', $projectName);
+		$config->set('TIMEZONE', $timezone);
+		$config->set('DEFAULT_LOCALE', $this->lang);
+		$config->setLocal('INSTNAME', 'sly'.$systemID);
+		$config->setLocal('DATABASE', $dbConfig);
 
-				// prepare version check, retrieve min versions from driver
+		// check connection and either forward to the next page or show the config form again
+		$valid = $this->checkDatabaseConnection($dbConfig, $create);
 
-				$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
-				$driverImpl  = new $driverClass('', '', '', '');
-				$constraints = $driverImpl->getVersionConstraints();
-
-				// check version
-
-				$helper = new sly_Util_Requirements();
-				$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
-
-				// warn only, but continue workflow
-				if ($result['status'] === sly_Util_Requirements::WARNING) {
-					$this->flash->appendWarning($result['text']);
-				}
-
-				// stop further code
-				elseif ($result['status'] === sly_Util_Requirements::FAILED) {
-					throw new sly_Exception($result['text']);
-				}
-
-				if ($create) {
-					$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
-					$db->query($createStmt);
-				}
-
-				$data = compact('DRIVER', 'HOST', 'LOGIN', 'PASSWORD', 'NAME', 'TABLE_PREFIX');
-				$config->setLocal('DATABASE', $data);
-
-				return $this->initdbAction();
-			}
-			catch (sly_DB_PDO_Exception $e) {
-				$this->flash->appendWarning($e->getMessage());
-			}
-		}
-
-		$this->render('setup/dbconfig.phtml', array(
-			'host'    => $data['HOST'],
-			'user'    => $data['LOGIN'],
-			'pass'    => $data['PASSWORD'],
-			'dbname'  => $data['NAME'],
-			'prefix'  => $data['TABLE_PREFIX'],
-			'driver'  => $data['DRIVER'],
-			'drivers' => $drivers
-		), false);
+		return $valid ? $this->redirectResponse('install') : $this->configView();
 	}
 
-	public function initdbAction() {
+	public function installAction() {
 		$this->init();
 
 		$request        = $this->getRequest();
@@ -306,33 +194,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		), false);
 	}
 
-	public function configAction() {
-		$this->init();
-
-		$config      = sly_Core::config();
-		$request     = $this->getRequest();
-		$projectname = $request->post('projectname', 'string', '');
-		$timezone    = $request->post('timezone', 'string', 'UTC');
-
-		// do not just check for POST, since we may have been forwarded from the previous action
-		if ($timezone) {
-			$uid = sha1(sly_Util_Password::getRandomData(40));
-			$uid = substr($uid, 0, 20);
-
-			$config->set('PROJECTNAME', $projectname);
-			$config->set('TIMEZONE', $timezone);
-			$config->set('DEFAULT_LOCALE', $this->lang);
-			$config->setLocal('INSTNAME', 'sly'.$uid);
-
-			return $this->createuserAction(true);
-		}
-
-		$this->render('setup/config.phtml', array(
-			'projectName' => $config->get('PROJECTNAME'),
-			'timezone'    => @date_default_timezone_get()
-		), false);
-	}
-
 	public function createuserAction($redirected = false) {
 		$this->init();
 
@@ -407,9 +268,30 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$this->render('setup/finish.phtml', array(), false);
 	}
 
-	protected function checkDirsAndFiles() {
+	protected function checkSystem(array $viewParams) {
+		$errors = $viewParams['errors'];
+		$tester = new sly_Util_Requirements();
+
+		$results['version']      = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
+		$results['time_limit']   = array('20s', '60s', $tester->execTime(20, 60));
+		$results['mem_limit']    = array('16MB', '64MB', $tester->memoryLimit(16, 64));
+		$results['safe_mode']    = array(t('disabled'), t('disabled'), $tester->safeMode());
+		$results['open_basedir'] = array(t('disabled'), t('disabled'), $tester->openBasedir());
+
+		foreach ($results as $result) {
+			$errors |= $result[2]['status'] === sly_Util_Requirements::FAILED;
+		}
+
+		$viewParams['errors']  = $errors;
+		$viewParams['results'] = $results;
+
+		return $viewParams;
+	}
+
+	protected function checkDirectories(array $viewParams) {
+		$errors    = $viewParams['errors'];
 		$s         = DIRECTORY_SEPARATOR;
-		$errors    = array();
+		$dirs      = array();
 		$writables = array(
 			SLY_MEDIAFOLDER,
 			SLY_DEVELOPFOLDER.$s.'templates',
@@ -420,12 +302,85 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 		foreach ($writables as $dir) {
 			if (!sly_Util_Directory::create($dir)) {
-				$errors[] = $dir;
+				$dirs[] = $dir;
+				$errors = true;
 			}
 		}
 
 		error_reporting($level);
-		return $errors;
+
+		$viewParams['errors']      = $errors;
+		$viewParams['directories'] = $dirs;
+
+		return $viewParams;
+	}
+
+	public function checkHttpAccess(array $viewParams) {
+		$errors    = $viewParams['errors'];
+		$dirs      = array();
+		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal');
+
+		foreach ($protected as $dir) {
+			if (!sly_Util_Directory::createHttpProtected($dir)) {
+				$dirs[] = $dir;
+				$errors = true;
+			}
+		}
+
+		$viewParams['errors']     = $errors;
+		$viewParams['httpAccess'] = $dirs;
+
+		return $viewParams;
+	}
+
+	protected function checkDatabaseConnection(array $config, $create) {
+		extract($config);
+
+		try {
+			$drivers = sly_DB_PDO_Driver::getAvailable();
+
+			if (!in_array($DRIVER, $drivers)) {
+				throw new sly_Exception(t('setup_invalid_driver'));
+			}
+
+			// open connection
+			if ($create) {
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
+			}
+			else {
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
+			}
+
+			// prepare version check, retrieve min versions from driver
+			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
+			$driverImpl  = new $driverClass('', '', '', '');
+			$constraints = $driverImpl->getVersionConstraints();
+
+			// check version
+			$helper = new sly_Util_Requirements();
+			$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
+
+			// warn only, but continue workflow
+			if ($result['status'] === sly_Util_Requirements::WARNING) {
+				$this->flash->appendWarning($result['text']);
+			}
+
+			// stop further code
+			elseif ($result['status'] === sly_Util_Requirements::FAILED) {
+				throw new sly_Exception($result['text']);
+			}
+
+			if ($create) {
+				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
+				$db->query($createStmt);
+			}
+
+			return true;
+		}
+		catch (sly_DB_PDO_Exception $e) {
+			$this->flash->appendWarning($e->getMessage());
+			return false;
+		}
 	}
 
 	protected function setupImport($sqlScript) {
@@ -447,7 +402,39 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		return true;
 	}
 
-	public function checkPermission($action) {
-		return true;
+	protected function getBadge(array $testResult, $text = null, $showRange = true) {
+		if ($text === null) $text = $testResult[2]['text'];
+
+		switch ($testResult[2]['status']) {
+			case sly_Util_Requirements::OK:
+				$cls     = 'success';
+				$icon    = 'ok';
+				$tooltip = null;
+				break;
+
+			case sly_Util_Requirements::WARNING:
+				$cls     = 'warning';
+				$icon    = 'exclamation-sign';
+				$tooltip = $showRange ? t('compatible_but_old', $testResult[1]) : null;
+				break;
+
+			case sly_Util_Requirements::FAILED:
+				$cls     = 'important';
+				$icon    = 'remove';
+				$tooltip = $showRange ? t('requires_at_least', $testResult[0]) : null;
+				break;
+		}
+
+		if ($tooltip) {
+			return sprintf(
+				'<span class="badge badge-%s" rel="tooltip" title="%s" data-placement="bottom"><i class="icon-%s icon-white"></i> %s</span>',
+				$cls, sly_html($tooltip), $icon, sly_html($text)
+			);
+		}
+
+		return sprintf(
+			'<span class="badge badge-%s"><i class="icon-%s icon-white"></i> %s</span>',
+			$cls, $icon, sly_html($text)
+		);
 	}
 }

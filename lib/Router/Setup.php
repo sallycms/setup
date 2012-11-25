@@ -50,8 +50,7 @@ class sly_Router_Setup extends sly_Router_Base {
 		$base = $this->app->getBaseUrl($forceProtocol);
 		$url  = $this->getUrl($action, $params, $sep);
 
-		// $url always starts with './' and $base never as a trailing slash.
-		return $base.substr($url, 1);
+		return $base.($url === './' ? '' : $url);
 	}
 
 	public function getPlainUrl($action = 'index', $params = '') {
