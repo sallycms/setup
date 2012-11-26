@@ -105,14 +105,35 @@ class sly_Util_Requirements {
 	 * @return array
 	 */
 	public function safeMode() {
-		return ini_get('safe_mode') ? $this->failed('safe_mode') : $this->ok(t('none'));
+		return ini_get('safe_mode') ? $this->failed(t('enabled')) : $this->ok(t('disabled'));
 	}
 
 	/**
 	 * @return array
 	 */
 	public function openBasedir() {
-		return ini_get('open_basedir') ? $this->warning('open_basedir') : $this->ok(t('none'));
+		return ini_get('open_basedir') ? $this->failed(t('enabled')) : $this->ok(t('disabled'));
+	}
+
+	/**
+	 * @return array
+	 */
+	public function registerGlobals() {
+		return ini_get('register_globals') ? $this->warning(t('enabled')) : $this->ok(t('disabled'));
+	}
+
+	/**
+	 * @return array
+	 */
+	public function magicQuotes() {
+		return ini_get('magic_quotes_gpc') ? $this->warning(t('enabled')) : $this->ok(t('disabled'));
+	}
+
+	/**
+	 * @return array
+	 */
+	public function extAvailable($ext, $required) {
+		return extension_loaded($ext) ? $this->ok($ext) : ($required ? $this->failed($ext) : $this->warning($ext));
 	}
 
 	/**

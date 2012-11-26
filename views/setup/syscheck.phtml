@@ -1,0 +1,90 @@
+<?php
+/*
+ * Copyright (c) 2012, webvariants GbR, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml', array('enabled' => array(), 'active' => null));
+
+$badges = array(
+	'version'         => $this->getBadge($results['version'], 'PHP '.PHP_VERSION),
+	'timeLimit'       => $this->getBadge($results['time_limit']),
+	'memLimit'        => $this->getBadge($results['mem_limit']),
+	'registerGlobals' => $this->getBadge($results['register_globals'], 'register_globals'),
+	'magicQuotes'     => $this->getBadge($results['magic_quotes'], 'magic_quotes'),
+	'safeMode'        => $this->getBadge($results['safe_mode'], 'safe_mode'),
+	'safeMode'        => $this->getBadge($results['safe_mode'], 'safe_mode'),
+	'openBasedir'     => $this->getBadge($results['open_basedir'], 'open_basedir'),
+);
+
+sort($exts);
+$extensions = array();
+
+foreach ($exts as $ext) {
+	$extensions[] = $this->getBadge($results['ext_'.$ext], $ext);
+}
+
+?>
+
+<fieldset>
+	<legend><?php print t('system_configuration') ?></legend>
+
+	<dl class="dl-horizontal system-config">
+		<dt><?php print t('php_version') ?>:</dt>
+		<dd><?php print $badges['version'] ?></dd>
+
+		<dt><?php print t('limits') ?>:</dt>
+		<dd><?php print $badges['memLimit'].' '.$badges['timeLimit'] ?></dd>
+
+		<dt><?php print t('php_settings') ?>:</dt>
+		<dd><?php print $badges['registerGlobals'].' '.$badges['magicQuotes'].' '.$badges['safeMode'].' '.$badges['openBasedir'] ?></dd>
+
+		<dt><?php print t('php_extensions') ?>:</dt>
+		<dd><?php print implode(' ', $extensions) ?></dd>
+	</dl>
+</fieldset>
+
+<?php if (!empty($directories)): ?>
+<fieldset>
+	<legend><?php print t('system_directories') ?></legend>
+	<p><?php print t('system_directories_help') ?></p>
+
+	<ul>
+		<?php foreach ($directories as $dir): ?>
+		<li><?php print sly_html($dir) ?></li>
+		<?php endforeach ?>
+	</ul>
+
+	<p><?php print t('system_directories_todo') ?></p>
+</fieldset>
+<?php endif ?>
+
+<?php if (!empty($httpAccess)): ?>
+<fieldset>
+	<legend><?php print t('http_access_protection') ?></legend>
+	<p><?php print t('http_access_protection_help') ?></p>
+
+	<ul>
+		<?php foreach ($httpAccess as $dir): ?>
+		<li><?php print sly_html($dir) ?></li>
+		<?php endforeach ?>
+	</ul>
+
+	<p><?php print t('http_access_protection_todo') ?></p>
+</fieldset>
+<?php endif ?>
+
+<div class="alert alert-error">
+<?php print t('please_fix_problems_to_continue') ?>
+</div>
+
+<script type="text/javascript">
+jQuery(function($) {
+	// enable bootstrap's tooltips
+	$('[rel=tooltip]').tooltip();
+});
+</script>

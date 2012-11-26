@@ -8,14 +8,12 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-print $this->render('layout/navigation.phtml');
+print $this->render('layout/navigation.phtml', array('enabled' => array('index'), 'active' => 'index'));
 
 $badges = array(
-	'version'     => $this->getBadge($results['version'], 'PHP '.PHP_VERSION),
-	'timeLimit'   => $this->getBadge($results['time_limit']),
-	'memLimit'    => $this->getBadge($results['mem_limit']),
-	'safeMode'    => $this->getBadge($results['safe_mode'], 'safe_mode'),
-	'openBasedir' => $this->getBadge($results['open_basedir'], 'open_basedir')
+	$this->getBadge($results['version'], 'PHP '.PHP_VERSION),
+	$this->getBadge($results['time_limit']),
+	$this->getBadge($results['mem_limit'])
 );
 
 ?>
@@ -71,9 +69,9 @@ $badges = array(
 			<div class="controls controls-row">
 				<input type="text" name="host" id="host" placeholder="localhost" class="span3" value="<?php print sly_html($database['host']) ?>" />
 
-				<select name="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
+				<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
 					<option value="mysql">MySQL</option>
-					<option>SQLite</option>
+					<option value="sqlite">SQLite</option>
 					<option>PostgreSQL</option>
 					<option>Oracle</option>
 				</select>
@@ -91,9 +89,13 @@ $badges = array(
 		<div class="control-group">
 			<label class="control-label" for="database"><?php print t('database') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" placeholder="mydatabase" class="span3">
+				<div class="span3" style="margin-left:0" id="database-container">
+					<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" class="span3" placeholder="mydatabase" />
+					<span class="add-on" style="display:none">.sq3</span>
+				</div>
+
 				<label class="checkbox span2">
-					<input type="checkbox" name="create" value="1" /> <?php print t('create') ?>
+					<input type="checkbox" name="create" id="create" value="1" /> <?php print t('create') ?>
 				</label>
 			</div>
 		</div>
@@ -113,5 +115,18 @@ $badges = array(
 </form>
 
 <script type="text/javascript">
-jQuery('[rel=tooltip]').tooltip();
+jQuery(function($) {
+	// enable bootstrap's tooltips
+	$('[rel=tooltip]').tooltip();
+
+	// disable host,user,pass when selecting SQLite
+	$('#driver').change(function() {
+		var disable = $(this).val() === 'sqlite';
+
+		$('#host,#username,#password,#create').prop('disabled', disable);
+		$('#create').parent().toggle(!disable);
+		$('#database').parent().toggleClass('input-append', disable);
+		$('.add-on').css({display: disable ? 'inline-block' : 'none'});
+	});
+});
 </script>
