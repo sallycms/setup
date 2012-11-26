@@ -3,6 +3,7 @@ compatible_but_old: 'Empfehlung: {0}'
 requires_at_least: 'Mindestanforderung: {0}'
 exec_time: '{0}s, änderbar'
 memory: '{0}MB, änderbar'
+enabled: aktiviert
 disabled: deaktiviert
 welcome: Willkommen
 intro: |
@@ -26,3 +27,17 @@ create: anlegen
 table_prefix: Tabellen-Präfix
 table_prefix_help: 'muss i.d.R. nicht geändert werden; erlaubt es, mehrere Projekte in einer Datenbank zu verwalten'
 next_step: 'Zum nächsten Schritt  &raquo;'
+system_configuration: Systemkonfiguration
+php_version: PHP-Version
+limits: Limits
+php_settings: Einstellungen
+php_extensions: Erweiterungen
+system_directories: Systemverzeichnisse
+system_directories_help: 'Zur korrekten Funktionsweise müssen die folgenden Verzeichnisse existieren, konnten allerdings nicht automatisch angelegt werden:'
+system_directories_todo: 'Bitte legen Sie die Verzeichnisse manuell an.'
+http_access_protection: HTTP-Zugriffsschutz
+http_access_protection_help: |
+  Zur Sicherheit gegen unautorisierten Zugriff müssen einige Verzeichnisse mit
+  <code>.htaccess</code>-Dateien geschützt werden. Die folgenden Verzeichnisse
+  konnten nicht automatisch geschützt werden:
+http_access_protection_todo: 'Bitte korrigieren Sie die Verzeichnisrechte oder legen Sie die nötige Datei manuell an.'

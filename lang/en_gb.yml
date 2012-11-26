@@ -3,6 +3,7 @@ compatible_but_old: 'Recommendation: {0}'
 requires_at_least: 'Minimal Requirement: {0}'
 exec_time: '{0}s, variable'
 memory: '{0}MB, variable'
+enabled: enabled
 disabled: disabled
 welcome: Welcome
 intro: |
@@ -26,3 +27,21 @@ create: create
 table_prefix: Table Prefix
 table_prefix_help: 'does not need to be changed in most cases; allows for multiple projects in one database'
 next_step: 'Proceed with next step  &raquo;'
+system_configuration: System Configuration
+php_version: PHP Version
+limits: Limits
+php_settings: Settings
+php_extensions: Extensions
+system_directories: System Directories
+system_directories_help: 'The following directories must exist in order for SallyCMS to work properly, but could not be created automatically:'
+system_directories_todo: 'Please create these directories manually.'
+http_access_protection: HTTP Access Protection
+http_access_protection_help: |
+  Zur Sicherheit gegen unautorisierten Zugriff müssen einige Verzeichnisse mit
+  <code>.htaccess</code>-Dateien geschützt werden. Die folgenden Verzeichnisse
+  konnten nicht automatisch geschützt werden:
+http_access_protection_help: |
+  To protect against unauthorized access, some directories have to be protected
+  with a <code>.htaccess</code> file. This file could not be created in the
+  following directories:
+http_access_protection_todo: 'Please create the required file manually or adjust the directory permissions.'

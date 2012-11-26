@@ -10,9 +10,23 @@
 
 class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sly_Controller_Interface {
 	protected $flash;
+	protected $results;
 
 	protected function init() {
 		$this->flash = sly_Core::getFlashMessage();
+
+		// check system config and stop with an error page if any serious problems arise
+		$params = array('errors' => false);
+		$params = $this->checkSystem($params);
+		$params = $this->checkDirectories($params);
+		$params = $this->checkHttpAccess($params);
+
+		if ($params['errors']) {
+			$this->syscheckView($params);
+			return false;
+		}
+
+		return true;
 	}
 
 	public function checkPermission($action) {
@@ -20,8 +34,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	public function indexAction()	{
-		$this->init();
-
 		// Just load defaults and this should be the only time to do so.
 		// Beware that when restarting the setup, the configuration is already present.
 		$config = $this->getContainer()->getConfig();
@@ -31,7 +43,9 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
 		}
 
-		$this->configView();
+		if ($this->init()) {
+			$this->configView();
+		}
 	}
 
 	protected function configView() {
@@ -56,6 +70,10 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$params = $this->checkHttpAccess($params);
 
 		$this->render('setup/index.phtml', $params, false);
+	}
+
+	protected function syscheckView(array $viewParams) {
+		$this->render('setup/syscheck.phtml', $viewParams, false);
 	}
 
 	public function saveconfigAction() {
@@ -269,14 +287,32 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	protected function checkSystem(array $viewParams) {
-		$errors = $viewParams['errors'];
-		$tester = new sly_Util_Requirements();
+		$errors   = $viewParams['errors'];
+		$tester   = new sly_Util_Requirements();
+		$exts     = array('zlib' => false, 'iconv' => false, 'mbstring' => true, 'pdo' => true, 'reflection' => false);
+		$enabled  = t('enabled');
+		$disabled = t('disabled');
 
-		$results['version']      = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
-		$results['time_limit']   = array('20s', '60s', $tester->execTime(20, 60));
-		$results['mem_limit']    = array('16MB', '64MB', $tester->memoryLimit(16, 64));
-		$results['safe_mode']    = array(t('disabled'), t('disabled'), $tester->safeMode());
-		$results['open_basedir'] = array(t('disabled'), t('disabled'), $tester->openBasedir());
+		if ($this->results) {
+			$results = $this->results;
+		}
+		else {
+			$results['version']          = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
+			$results['time_limit']       = array('20s', '60s', $tester->execTime(20, 60));
+			$results['mem_limit']        = array('16MB', '64MB', $tester->memoryLimit(16, 64));
+			$results['register_globals'] = array($disabled, $disabled, $tester->registerGlobals());
+			$results['magic_quotes']     = array($disabled, $disabled, $tester->magicQuotes());
+			$results['safe_mode']        = array($disabled, $disabled, $tester->safeMode());
+			$results['open_basedir']     = array($disabled, $disabled, $tester->openBasedir());
+			$results['open_basedir']     = array($disabled, $disabled, $tester->openBasedir());
+
+			foreach ($exts as $ext => $required) {
+				$key           = 'ext_'.$ext;
+				$results[$key] = array($enabled, $enabled, $tester->extAvailable($ext, $required));
+			}
+
+			$this->results = $results;
+		}
 
 		foreach ($results as $result) {
 			$errors |= $result[2]['status'] === sly_Util_Requirements::FAILED;
@@ -284,6 +320,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 		$viewParams['errors']  = $errors;
 		$viewParams['results'] = $results;
+		$viewParams['exts']    = array_keys($exts);
 
 		return $viewParams;
 	}
@@ -403,38 +440,48 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	protected function getBadge(array $testResult, $text = null, $showRange = true) {
+		return $this->getWidget(
+			$testResult, $text, $showRange,
+			'<span class="badge badge-{bclass}"><i class="icon-{iclass} icon-white"></i> {text}</span>',
+			'<span class="badge badge-{bclass}" rel="tooltip" title="{tooltip}" data-placement="bottom"><i class="icon-{iclass} icon-white"></i> {text}</span>'
+		);
+	}
+
+	protected function getWidget(array $testResult, $text = null, $showRange = true, $regularFormat, $tooltippedFormat) {
 		if ($text === null) $text = $testResult[2]['text'];
 
 		switch ($testResult[2]['status']) {
 			case sly_Util_Requirements::OK:
 				$cls     = 'success';
 				$icon    = 'ok';
+				$tCls    = 'success';
 				$tooltip = null;
 				break;
 
 			case sly_Util_Requirements::WARNING:
 				$cls     = 'warning';
 				$icon    = 'exclamation-sign';
+				$tCls    = 'warning';
 				$tooltip = $showRange ? t('compatible_but_old', $testResult[1]) : null;
 				break;
 
 			case sly_Util_Requirements::FAILED:
 				$cls     = 'important';
 				$icon    = 'remove';
+				$tCls    = 'error';
 				$tooltip = $showRange ? t('requires_at_least', $testResult[0]) : null;
 				break;
 		}
 
-		if ($tooltip) {
-			return sprintf(
-				'<span class="badge badge-%s" rel="tooltip" title="%s" data-placement="bottom"><i class="icon-%s icon-white"></i> %s</span>',
-				$cls, sly_html($tooltip), $icon, sly_html($text)
-			);
-		}
-
-		return sprintf(
-			'<span class="badge badge-%s"><i class="icon-%s icon-white"></i> %s</span>',
-			$cls, $icon, sly_html($text)
+		$format  = $tooltip ? $tooltippedFormat : $regularFormat;
+		$tooltip = sly_html($tooltip);
+		$text    = sly_html($text);
+		$format  = str_replace(
+			array('{bclass}', '{iclass}', '{tclass}', '{tooltip}', '{text}'),
+			array($cls,       $icon,      $tCls,      $tooltip,    $text),
+			$format
 		);
+
+		return $format;
 	}
 }
