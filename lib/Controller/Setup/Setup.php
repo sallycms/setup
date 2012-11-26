@@ -41,6 +41,12 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		if (!$config->has('DEFAULT_LOCALE')) {
 			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
 			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
+
+			// create system ID
+			$systemID = sha1(sly_Util_Password::getRandomData(40));
+			$systemID = substr($systemID, 0, 20);
+
+			$config->setLocal('INSTNAME', 'sly'.$systemID);
 		}
 
 		if ($this->init()) {
@@ -49,12 +55,15 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	protected function configView() {
-		$config   = $this->getContainer()->getConfig();
-		$database = $config->get('DATABASE');
-		$params   = array(
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+		$session   = $container->getSession();
+		$database  = $config->get('DATABASE');
+		$params    = array(
 			'projectName' => $config->get('PROJECTNAME'),
 			'timezone'    => $config->get('TIMEZONE'),
 			'errors'      => false,
+			'license'     => $session->get('license', 'bool', false),
 			'database'    => array(
 				'driver'   => $database['DRIVER'],
 				'host'     => $database['HOST'],
@@ -94,6 +103,18 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			return $this->configView();
 		}
 
+		// save new config values
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+		$session   = $container->getSession();
+
+		// check for accepted license
+		if (!$request->post('license', 'bool', false)) {
+			$this->flash->appendWarning(t('must_accept_license'));
+			$session->set('license', false);
+			return $this->configView();
+		}
+
 		// retrieve general config
 		$projectName = $request->post('projectname', 'string', '');
 		$timezone    = $request->post('timezone', 'string', 'UTC');
@@ -115,26 +136,23 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			'TABLE_PREFIX' => $prefix
 		);
 
-		// create system ID
-		$systemID = sha1(sly_Util_Password::getRandomData(40));
-		$systemID = substr($systemID, 0, 20);
-
-		// save new config values
-		$config = $this->getContainer()->getConfig();
+		// update configuration
 		$config->set('PROJECTNAME', $projectName);
 		$config->set('TIMEZONE', $timezone);
-		$config->set('DEFAULT_LOCALE', $this->lang);
-		$config->setLocal('INSTNAME', 'sly'.$systemID);
+		$config->set('DEFAULT_LOCALE', $session->get('locale', 'string', sly_Core::getDefaultLocale()));
 		$config->setLocal('DATABASE', $dbConfig);
+
+		// remember the accepted license
+		$session->set('license', true);
 
 		// check connection and either forward to the next page or show the config form again
 		$valid = $this->checkDatabaseConnection($dbConfig, $create);
 
-		return $valid ? $this->redirectResponse('install') : $this->configView();
+		return $valid ? $this->redirectResponse(array(), 'initdb') : $this->configView();
 	}
 
-	public function installAction() {
-		$this->init();
+	public function initdbAction() {
+		if (!$this->init()) return;
 
 		$request        = $this->getRequest();
 		$dbInitFunction = $request->post('db_init_function', 'string', '');
@@ -437,6 +455,21 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		}
 
 		return true;
+	}
+
+	protected function renderFlashMessage() {
+		$msg      = sly_Core::getFlashMessage();
+		$messages = $msg->getMessages(sly_Util_FlashMessage::TYPE_WARNING);
+		$result   = array();
+
+		foreach ($messages as $m) {
+			if (is_array($m)) $m = implode("<br />\n", $m);
+			$result[] = '<div class="alert alert-error">'.sly_html($m).'</div>';
+		}
+
+		$msg->clear();
+
+		return implode("\n", $result);
 	}
 
 	protected function getBadge(array $testResult, $text = null, $showRange = true) {

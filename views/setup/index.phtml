@@ -46,16 +46,10 @@ $badges = array(
 			</div>
 		</div>
 
-		<?php if ($errors): ?>
-		<div class="alert alert-error">
-		<?php print t('please_fix_problems_to_continue') ?>
-		</div>
-		<?php else: ?>
-
 		<div class="control-group">
 			<div class="controls">
 				<label class="checkbox">
-					<input type="checkbox" name="license" value="1" /> <?php print t('read_license') ?>
+					<input type="checkbox" name="license" value="1"<?php print $license ? ' checked="checked"' : '' ?> /> <?php print t('read_license') ?>
 				</label>
 			</div>
 		</div>
@@ -103,14 +97,15 @@ $badges = array(
 		<div class="control-group">
 			<label class="control-label" for="prefix"><?php print t('table_prefix') ?>:</label>
 			<div class="controls">
-				<input type="text" name="prefix" id="prefix" placeholder="sly_" class="span1" title="<?php print t('table_prefix_help') ?>" rel="tooltip" data-placement="right" data-trigger="focus" />
+				<input type="text" name="prefix" id="prefix" value="<?php print sly_html($database['prefix']) ?>" placeholder="sly_" class="span1" title="<?php print t('table_prefix_help') ?>" rel="tooltip" data-placement="right" data-trigger="focus" />
 			</div>
 		</div>
+
+		<?php print $this->renderFlashMessage() ?>
 
 		<div class="form-actions">
 			<button type="submit" class="btn btn-primary"><?php print t('next_step') ?></button>
 		</div>
-		<?php endif ?>
 	</fieldset>
 </form>
 

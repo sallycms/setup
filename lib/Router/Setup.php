@@ -50,7 +50,7 @@ class sly_Router_Setup extends sly_Router_Base {
 		$base = $this->app->getBaseUrl($forceProtocol);
 		$url  = $this->getUrl($action, $params, $sep);
 
-		return $base.($url === './' ? '' : $url);
+		return $base.($url === './' ? '' : substr($url, 1));
 	}
 
 	public function getPlainUrl($action = 'index', $params = '') {
