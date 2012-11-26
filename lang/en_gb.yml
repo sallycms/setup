@@ -45,3 +45,6 @@ http_access_protection_help: |
   with a <code>.htaccess</code> file. This file could not be created in the
   following directories:
 http_access_protection_todo: 'Please create the required file manually or adjust the directory permissions.'
+pdo_driver: Database Drivers
+pdo_driver_help: 'SallyCMS requires PDO as well as at least the <code>pdo_mysql</code> driver, in order to communicate with the database. The extension could not be found, however.'
+host: Host
