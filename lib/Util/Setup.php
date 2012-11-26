@@ -100,42 +100,50 @@ class sly_Util_Setup {
 	public static function checkDatabaseConnection(array $config, $create) {
 		extract($config);
 
-		$drivers = sly_DB_PDO_Driver::getAvailable();
+		try {
+			$drivers = sly_DB_PDO_Driver::getAvailable();
 
-		if (!in_array($DRIVER, $drivers)) {
-			throw new sly_Exception(t('setup_invalid_driver'));
+			if (!in_array($DRIVER, $drivers)) {
+				throw new sly_Exception(t('setup_invalid_driver'));
+			}
+
+			// open connection
+			if ($create) {
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
+			}
+			else {
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
+			}
+
+			// prepare version check, retrieve min versions from driver
+			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
+			$driverImpl  = new $driverClass('', '', '', '');
+			$constraints = $driverImpl->getVersionConstraints();
+
+			// check version
+			$helper = new sly_Util_Requirements();
+			$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
+
+			// warn only, but continue workflow
+			if ($result['status'] === sly_Util_Requirements::WARNING) {
+				$this->flash->appendWarning($result['text']);
+			}
+
+			// stop further code
+			elseif ($result['status'] === sly_Util_Requirements::FAILED) {
+				throw new sly_Exception($result['text']);
+			}
+
+			if ($create) {
+				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
+				$db->query($createStmt);
+			}
+
+			return true;
 		}
-
-		// open connection
-		if ($create) {
-			$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
-		}
-		else {
-			$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
-		}
-
-		// prepare version check, retrieve min versions from driver
-		$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
-		$driverImpl  = new $driverClass('', '', '', '');
-		$constraints = $driverImpl->getVersionConstraints();
-
-		// check version
-		$helper = new sly_Util_Requirements();
-		$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
-
-		// warn only, but continue workflow
-		if ($result['status'] === sly_Util_Requirements::WARNING) {
-			$this->flash->appendWarning($result['text']);
-		}
-
-		// stop further code
-		elseif ($result['status'] === sly_Util_Requirements::FAILED) {
-			throw new sly_Exception($result['text']);
-		}
-
-		if ($create) {
-			$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
-			$db->query($createStmt);
+		catch (Exception $e) {
+			sly_Core::getFlashMessage()->appendWarning($e->getMessage());
+			return false;
 		}
 	}
 
