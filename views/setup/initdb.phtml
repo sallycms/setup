@@ -1,0 +1,72 @@
+<?php
+/*
+ * Copyright (c) 2012, webvariants GbR, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml', array('enabled' => array('index', 'initdb'), 'active' => 'initdb'));
+
+?>
+<form class="form-horizontal" action="<?php print $_router->getUrl('initdb') ?>" method="post">
+	<fieldset>
+		<legend><?php print t('general_config') ?></legend>
+
+		<div class="control-group">
+			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
+			<div class="controls">
+				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="timezone"><?php print t('timezone') ?>:</label>
+			<div class="controls">
+				<input type="text" id="timezone" placeholder="Europe/Berlin" />
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend><?php print t('create_admin') ?></legend>
+
+		<div class="control-group">
+			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
+			<div class="controls controls-row">
+				<input type="text" name="username" id="username" placeholder="admin" class="span3" />
+				<input type="text" name="password" id="password" placeholder="mypassword" class="span3" />
+			</div>
+		</div>
+
+		<div class="control-group">
+			<div class="controls span2">
+				<label class="checkbox">
+					<input type="checkbox" name="create" id="create" value="1" /> <?php print t('create') ?>
+				</label>
+			</div>
+		</div>
+
+		<?php print $this->renderFlashMessage() ?>
+
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary"><?php print t('finish_setup') ?></button>
+		</div>
+	</fieldset>
+</form>
+
+<script type="text/javascript">
+jQuery(function($) {
+	// disable host,user,pass when selecting SQLite
+	$('#driver').change(function() {
+		var disable = $(this).val() === 'sqlite';
+
+		$('#host,#username,#password,#create').prop('disabled', disable);
+		$('#create').parent().toggle(!disable);
+		$('#database').parent().toggleClass('input-append', disable);
+		$('.add-on').css({display: disable ? 'inline-block' : 'none'});
+	});
+});
+</script>

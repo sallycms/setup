@@ -119,8 +119,8 @@ class sly_App_Setup extends sly_App_Base {
 
 			if (empty($locale)) {
 				// get best locale based on Accept-Language header
-				$locale  = sly_Core::getDefaultLocale();
-				$accept  = $request->getLanguages();
+				$locale = sly_Core::getDefaultLocale();
+				$accept = $request->getLanguages();
 
 				foreach ($accept as $l) {
 					$l = strtolower($l);
