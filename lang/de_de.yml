@@ -41,3 +41,6 @@ http_access_protection_help: |
   <code>.htaccess</code>-Dateien geschützt werden. Die folgenden Verzeichnisse
   konnten nicht automatisch geschützt werden:
 http_access_protection_todo: 'Bitte korrigieren Sie die Verzeichnisrechte oder legen Sie die nötige Datei manuell an.'
+pdo_driver: Datenbank-Treiber
+pdo_driver_help: 'SallyCMS benötigt PDO sowie mindestens den <code>pdo_mysql</code>-Treiber, um mit der Datenbank zu kommunizieren. Diese Erweiterung ist allerdings nicht geladen.'
+host: Host

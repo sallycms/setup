@@ -11,21 +11,21 @@
 print $this->render('layout/navigation.phtml', array('enabled' => array(), 'active' => null));
 
 $badges = array(
-	'version'         => $this->getBadge($results['version'], 'PHP '.PHP_VERSION),
-	'timeLimit'       => $this->getBadge($results['time_limit']),
-	'memLimit'        => $this->getBadge($results['mem_limit']),
-	'registerGlobals' => $this->getBadge($results['register_globals'], 'register_globals'),
-	'magicQuotes'     => $this->getBadge($results['magic_quotes'], 'magic_quotes'),
-	'safeMode'        => $this->getBadge($results['safe_mode'], 'safe_mode'),
-	'safeMode'        => $this->getBadge($results['safe_mode'], 'safe_mode'),
-	'openBasedir'     => $this->getBadge($results['open_basedir'], 'open_basedir'),
+	'version'         => sly_Util_Setup::getBadge($results['version'], 'PHP '.PHP_VERSION),
+	'timeLimit'       => sly_Util_Setup::getBadge($results['time_limit']),
+	'memLimit'        => sly_Util_Setup::getBadge($results['mem_limit']),
+	'registerGlobals' => sly_Util_Setup::getBadge($results['register_globals'], 'register_globals'),
+	'magicQuotes'     => sly_Util_Setup::getBadge($results['magic_quotes'], 'magic_quotes'),
+	'safeMode'        => sly_Util_Setup::getBadge($results['safe_mode'], 'safe_mode'),
+	'safeMode'        => sly_Util_Setup::getBadge($results['safe_mode'], 'safe_mode'),
+	'openBasedir'     => sly_Util_Setup::getBadge($results['open_basedir'], 'open_basedir'),
 );
 
 sort($exts);
 $extensions = array();
 
 foreach ($exts as $ext) {
-	$extensions[] = $this->getBadge($results['ext_'.$ext], $ext);
+	$extensions[] = sly_Util_Setup::getBadge($results['ext_'.$ext], $ext);
 }
 
 ?>
@@ -75,6 +75,13 @@ foreach ($exts as $ext) {
 	</ul>
 
 	<p><?php print t('http_access_protection_todo') ?></p>
+</fieldset>
+<?php endif ?>
+
+<?php if (!empty($pdoDrivers)): ?>
+<fieldset>
+	<legend><?php print t('pdo_driver') ?></legend>
+	<p><?php print t('pdo_driver_help') ?></p>
 </fieldset>
 <?php endif ?>
 

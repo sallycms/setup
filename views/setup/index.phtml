@@ -11,10 +11,21 @@
 print $this->render('layout/navigation.phtml', array('enabled' => array('index'), 'active' => 'index'));
 
 $badges = array(
-	$this->getBadge($results['version'], 'PHP '.PHP_VERSION),
-	$this->getBadge($results['time_limit']),
-	$this->getBadge($results['mem_limit'])
+	sly_Util_Setup::getBadge($results['version'], 'PHP '.PHP_VERSION),
+	sly_Util_Setup::getBadge($results['time_limit']),
+	sly_Util_Setup::getBadge($results['mem_limit'])
 );
+
+$all       = array('mysql' => 'MySQL', 'sqlite' => 'SQLite', 'pgsql' => 'PostgreSQL', 'oci' => 'Oracle');
+$available = array();
+
+foreach ($all as $driver => $title) {
+	if (in_array($driver, $database['drivers'])) {
+		$available[$driver] = $title;
+	}
+}
+
+$multiDriver = count($available) > 1;
 
 ?>
 <form class="form-horizontal" action="<?php print $_router->getUrl('saveconfig') ?>" method="post">
@@ -56,19 +67,21 @@ $badges = array(
 	</fieldset>
 
 	<fieldset>
-		<legend><?php print t('database_access') ?></legend>
+		<legend><?php print t('database_access').($multiDriver ? '' : sprintf(' (%s)', reset($available))) ?></legend>
 
+		<?php if ($multiDriver || key($available) !== 'sqlite'): ?>
 		<div class="control-group">
-			<label class="control-label" for="host"><?php print t('host_and_driver') ?>:</label>
+			<label class="control-label" for="host"><?php print t($multiDriver ? 'host_and_driver' : 'host') ?>:</label>
 			<div class="controls controls-row">
 				<input type="text" name="host" id="host" placeholder="localhost" class="span3" value="<?php print sly_html($database['host']) ?>" />
 
+				<?php if ($multiDriver): ?>
 				<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
-					<option value="mysql">MySQL</option>
-					<option value="sqlite">SQLite</option>
-					<option>PostgreSQL</option>
-					<option>Oracle</option>
+					<?php foreach ($available as $key => $name): ?>
+					<option value="<?php print $key ?>"<?php print $key === $database['driver'] ? ' selected="selected"' : '' ?>><?php print $name ?></option>
+					<?php endforeach ?>
 				</select>
+				<?php endif ?>
 			</div>
 		</div>
 
@@ -79,6 +92,11 @@ $badges = array(
 				<input type="text" name="password" id="password" value="<?php print sly_html($database['password']) ?>" placeholder="mypassword" class="span3" />
 			</div>
 		</div>
+		<?php endif ?>
+
+		<?php if (!$multiDriver): ?>
+		<div><input type="hidden" name="driver" id="driver" value="<?php print key($available) ?>" /></div>
+		<?php endif ?>
 
 		<div class="control-group">
 			<label class="control-label" for="database"><?php print t('database') ?>:</label>
@@ -101,7 +119,7 @@ $badges = array(
 			</div>
 		</div>
 
-		<?php print $this->renderFlashMessage() ?>
+		<?php print sly_Util_Setup::renderFlashMessage() ?>
 
 		<div class="form-actions">
 			<button type="submit" class="btn btn-primary"><?php print t('next_step') ?></button>
@@ -122,6 +140,6 @@ jQuery(function($) {
 		$('#create').parent().toggle(!disable);
 		$('#database').parent().toggleClass('input-append', disable);
 		$('.add-on').css({display: disable ? 'inline-block' : 'none'});
-	});
+	}).change();
 });
 </script>
