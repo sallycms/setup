@@ -117,6 +117,15 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	public function initdbAction() {
 		if (!$this->init()) return;
 
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+		$session   = $container->getSession();
+
+		// if there is no valid db config, go back to the config page
+		if (!sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false)) {
+			return $this->redirectResponse();
+		}
+
 		$request        = $this->getRequest();
 		$dbInitFunction = $request->post('db_init_function', 'string', '');
 
