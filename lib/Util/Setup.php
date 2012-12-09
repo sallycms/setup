@@ -147,6 +147,57 @@ class sly_Util_Setup {
 		}
 	}
 
+	public static function checkDatabaseTables(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
+		$prefix         = $config->get('DATABASE/TABLE_PREFIX');
+		$availTables    = $db->listTables();
+		$requiredTables = array(
+			$prefix.'article',
+			$prefix.'article_slice',
+			$prefix.'clang',
+			$prefix.'file',
+			$prefix.'file_category',
+			$prefix.'user',
+			$prefix.'slice',
+			$prefix.'registry'
+		);
+
+		$actions      = array();
+		$intersection = array_intersect($requiredTables, $availTables);
+
+		// none of our tables already exist: offer 'setup' option
+		if (count($intersection) === 0) {
+			$actions[] = 'setup';
+		}
+
+		// at least some required tables are available: offer 'drop' action
+		if (count($intersection) !== 0) {
+			$actions[] = 'drop';
+		}
+
+		// all tables are available: offer 'nop' action
+		if (count($intersection) === count($requiredTables)) {
+			$actions[] = 'nop';
+		}
+
+		$viewParams['actions'] = $actions;
+
+		return $viewParams;
+	}
+
+	public static function checkUser(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
+		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
+		$availTables = $db->listTables();
+
+		if (in_array($prefix.'user', $availTables)) {
+			$viewParams['userExists'] = $db->magicFetch('user', 'id') !== false;
+		}
+		else {
+			$viewParams['userExists'] = false;
+		}
+
+		return $viewParams;
+	}
+
 	protected function setupImport($sqlScript) {
 		if (file_exists($sqlScript)) {
 			try {

@@ -126,80 +126,12 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			return $this->redirectResponse();
 		}
 
-		$request        = $this->getRequest();
-		$dbInitFunction = $request->post('db_init_function', 'string', '');
+		// check database status (all tables available, existing users)
+		$db     = $container->getPersistence();
+		$params = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
+		$params = sly_Util_Setup::checkUser($params, $config, $db);
 
-		// do not just check for POST, since we may have been forwarded from the previous action
-		if ($dbInitFunction) {
-			$config  = sly_Core::config();
-			$prefix  = $config->get('DATABASE/TABLE_PREFIX');
-			$driver  = $config->get('DATABASE/DRIVER');
-			$success = true;
-
-			// benötigte Tabellen prüfen
-
-			$requiredTables = array(
-				$prefix.'article',
-				$prefix.'article_slice',
-				$prefix.'clang',
-				$prefix.'file',
-				$prefix.'file_category',
-				$prefix.'user',
-				$prefix.'slice',
-				$prefix.'registry'
-			);
-
-			switch ($dbInitFunction) {
-				case 'drop': // delete old database
-					$db = sly_DB_Persistence::getInstance();
-
-					// 'DROP TABLE IF EXISTS' is MySQL-only...
-					foreach ($db->listTables() as $tblname) {
-						if (in_array($tblname, $requiredTables)) $db->query('DROP TABLE '.$tblname);
-					}
-
-					// fallthrough
-
-				case 'setup': // setup empty database with fresh tables
-					$script  = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
-					$success = $this->setupImport($script);
-
-					break;
-
-				case 'nop': // do nothing
-				default:
-			}
-
-			// Wenn kein Fehler aufgetreten ist, aber auch etwas geändert wurde, prüfen
-			// wir, ob dadurch alle benötigten Tabellen erzeugt wurden.
-
-			if ($success) {
-				$existingTables = array();
-				$db             = sly_DB_Persistence::getInstance();
-
-				foreach ($db->listTables() as $tblname) {
-					if (substr($tblname, 0, strlen($prefix)) === $prefix) {
-						$existingTables[] = $tblname;
-					}
-				}
-
-				foreach (array_diff($requiredTables, $existingTables) as $missingTable) {
-					$this->flash->appendWarning(t('setup_initdb_table_not_found', $missingTable));
-					$success = false;
-				}
-			}
-
-			if ($success) {
-				return $this->configAction();
-			}
-
-			$this->flash->appendWarning(t('setup_initdb_reinit'));
-		}
-
-		$this->render('setup/initdb.phtml', array(
-			'dbInitFunction'  => $dbInitFunction,
-			'dbInitFunctions' => array('setup', 'nop', 'drop')
-		), false);
+		$this->render('setup/initdb.phtml', $params, false);
 	}
 
 	public function createuserAction($redirected = false) {

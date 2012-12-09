@@ -44,3 +44,27 @@ http_access_protection_todo: 'Bitte korrigieren Sie die Verzeichnisrechte oder l
 pdo_driver: Datenbank-Treiber
 pdo_driver_help: 'SallyCMS benötigt PDO sowie mindestens den <code>pdo_mysql</code>-Treiber, um mit der Datenbank zu kommunizieren. Diese Erweiterung ist allerdings nicht geladen.'
 host: Host
+init_database: Datenbank einrichten
+init_database_help: |
+  Zur Nutzung von SallyCMS müssen einige Datenbank-Tabellen angelegt werden. Sie können
+  hier auswählen, wie Ihre Datenbank eingerichtet werden soll.
+db_action_setup: |
+  <i class="icon-wrench"></i> <strong>Leere Datenbank einrichten</strong><br />
+  Mit dieser Funktion wird eine leere, bereits bestehende Datenbank neu eingerichtet.
+db_action_drop: |
+  <i class="icon-trash"></i> <strong>Vorhandene Datenbank überschreiben</strong><br />
+  Mit dieser Funktion wird eine bereits bestehende Datenbank neu eingerichtet.
+  Hierbei werden die von SallyCMS benötigten Tabellen vorher gelöscht.
+db_action_nop: |
+  <i class="icon-forward"></i> <strong>Keine Änderung</strong><br />
+  Hierbei werden keinerlei Änderungen an der Datenbank vorgenommen. Alle benötigten
+  Tabellen müssen bereits in den korrekten Versionen vorliegen.
+create_admin: Administrator-Account anlegen
+create_admin_help: |
+  Sie müssen ein erstes Nutzerkonto einrichten, um sich im Anschluss an das Setup
+  im Backend einloggen zu können. Geben Sie dazu den Benutzernamen und ein
+  sicheres Passwort an. Falls der gewählte Benutzer bereits existiert, wird sein
+  Passwort durch Ihre Eingabe überschrieben.
+dont_create_user: keinen Benutzer anlegen
+generate: erzeugen
+finish_setup: 'Setup abschließen &raquo;'
