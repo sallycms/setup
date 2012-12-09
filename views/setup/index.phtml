@@ -8,7 +8,7 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-print $this->render('layout/navigation.phtml', array('enabled' => array('index'), 'active' => 'index'));
+print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'active' => 'index'));
 
 $badges = array(
 	sly_Util_Setup::getBadge($results['version'], 'PHP '.PHP_VERSION),

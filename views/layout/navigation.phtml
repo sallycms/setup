@@ -30,7 +30,7 @@ foreach ($classes as $link => $class) {
 		<li class="disabled separator">&raquo;</li>
 		<li class="<?php print $classes['initdb'] ?>"><a href="<?php print $_router->getUrl('initdb') ?>"><i class="icon-wrench"></i> <?php print ht('setup') ?></a></li>
 		<li class="disabled separator">&raquo;</li>
-		<li class="<?php print $classes['profit'] ?>"><a href="#"><i class="icon-heart"></i> <?php print ht('profit') ?></a></li>
+		<li class="<?php print $classes['profit'] ?>"><a href="<?php print $_router->getUrl('profit') ?>"><i class="icon-heart"></i> <?php print ht('profit') ?></a></li>
 	</ul>
 	<?php endif ?>
 </div>
