@@ -20,7 +20,7 @@ $first = reset($actions);
 
 		<div class="span10 pull-right">
 			<?php foreach ($actions as $action): ?>
-			<label class="radio"><input type="radio" name="dbAction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
+			<label class="radio"><input type="radio" name="dbAction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked" autofocus="autofocus"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
 			<?php endforeach ?>
 		</div>
 	</fieldset>
@@ -32,10 +32,10 @@ $first = reset($actions);
 		<div class="control-group">
 			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" name="username" id="username" placeholder="admin" class="span3" />
+				<input type="text" name="username" id="username" placeholder="admin" class="span3" required="required" />
 
 				<div class="input-append span3">
-					<input type="text" name="password" id="password" placeholder="mypassword" />
+					<input type="text" name="password" id="password" placeholder="mypassword" required="required" />
 					<button class="btn" type="button" id="gen_password"><i class="icon-repeat"></i> <?php print t('generate') ?></button>
 				</div>
 			</div>
@@ -61,14 +61,20 @@ $first = reset($actions);
 
 <script type="text/javascript">
 jQuery(function($) {
-	// disable host,user,pass when selecting SQLite
-	$('#driver').change(function() {
-		var disable = $(this).val() === 'sqlite';
-
-		$('#host,#username,#password,#create').prop('disabled', disable);
-		$('#create').parent().toggle(!disable);
-		$('#database').parent().toggleClass('input-append', disable);
-		$('.add-on').css({display: disable ? 'inline-block' : 'none'});
+	$('#no_user').change(function() {
+		$('#username,#password,#gen_password').prop('disabled', this.checked);
 	});
+	$('input[name="dbAction"]').change(function() {
+		var requireUser = $(this).val() !== 'nop';
+
+		$('#no_user').prop('disabled', requireUser);
+		$('#no_user').parent().toggleClass('muted', requireUser);
+
+		if (requireUser) {
+			$('#no_user').prop('checked', false).trigger('change');
+		}
+	});
+
+	$('input[name="dbAction"]:checked').change();
 });
 </script>
