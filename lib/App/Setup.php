@@ -110,7 +110,7 @@ class sly_App_Setup extends sly_App_Base {
 		// explicit locale in query string?
 		$request = $container->getRequest();
 		$locale  = $request->get('locale', 'string');
-		$locales = sly_I18N::getLocales(SLY_SALLYFOLDER.'/backend/lang');
+		$locales = sly_I18N::getLocales(SLY_SALLYFOLDER.'/setup/lang');
 		$session = $container->getSession();
 
 		if (empty($locale) || !in_array($locale, $locales)) {
