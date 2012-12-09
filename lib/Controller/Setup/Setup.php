@@ -199,17 +199,28 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	public function profitAction() {
-		if (($ret = $this->init(true)) !== true) return $ret;
+		if (($ret = $this->init(true, true)) !== true) return $ret;
 		$this->render('setup/profit.phtml', array('enabled' => array('index')), false);
 	}
 
 	public function loginAction() {
-		if (($ret = $this->init(true)) !== true) return $ret;
+		if (($ret = $this->init(true, true)) !== true) return $ret;
 
-		$config = $this->getContainer()->getConfig();
+		// disable setup
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+
 		$config->setLocal('SETUP', false);
 
-		$this->render('setup/finish.phtml', array(), false);
+		// redirect to backend
+		$request = $container->getRequest();
+		$baseUrl = $request->getBaseUrl(true);
+		$url     = $baseUrl.'/backend/';
+
+		$response = new sly_Response(t('redirect_to', $url), 302);
+		$response->setHeader('Location', $url);
+
+		return $response;
 	}
 
 	protected function configView() {
