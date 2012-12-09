@@ -151,75 +151,51 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 	public function databaseAction() {
 		if (($ret = $this->init(true)) !== true) return $ret;
-		$this->initdbView();
-	}
 
-	public function createuserAction($redirected = false) {
-		$this->init();
+		$request = $this->getRequest();
 
-		$config      = sly_Core::config();
-		$request     = $this->getRequest();
-		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
-		$pdo         = sly_DB_Persistence::getInstance();
-		$usersExist  = $pdo->listTables($prefix.'user') && $pdo->magicFetch('user', 'id') !== false;
-		$createAdmin = !$request->post('no_admin', 'boolean', false);
-		$adminUser   = $request->post('admin_user', 'string');
-		$adminPass   = $request->post('admin_pass', 'string');
-		$success     = true;
-
-		if ($request->isMethod('POST') && !$redirected) {
-			if ($createAdmin) {
-				if (empty($adminUser)) {
-					$this->flash->appendWarning(t('setup_createuser_no_admin_given'));
-					$success = false;
-				}
-
-				if (empty($adminPass)) {
-					$this->flash->appendWarning(t('setup_createuser_no_password_given'));
-					$success = false;
-				}
-
-				if ($success) {
-					$service = sly_Service_Factory::getUserService();
-					$user    = $service->find(array('login' => $adminUser));
-					$user    = empty($user) ? new sly_Model_User() : reset($user);
-
-					$user->setName(ucfirst(strtolower($adminUser)));
-					$user->setLogin($adminUser);
-					$user->setRights('#admin[]#');
-					$user->setStatus(true);
-					$user->setCreateDate(time());
-					$user->setUpdateDate(time());
-					$user->setLastTryDate(0);
-					$user->setCreateUser('setup');
-					$user->setUpdateUser('setup');
-					$user->setPassword($adminPass);
-					$user->setRevision(0);
-
-					try {
-						$service->save($user, $user);
-					}
-					catch (Exception $e) {
-						$this->flash->appendWarning(t('setup_createuser_cant_create_admin'));
-						$this->flash->appendWarning($e->getMessage());
-						$success = false;
-					}
-				}
-			}
-			elseif (!$usersExist) {
-				$this->flash->appendWarning(t('setup_createuser_no_users_found'));
-				$success = false;
-			}
-
-			if ($success) {
-				return $this->finishAction();
-			}
+		// allow only POST requests
+		if (!$request->isMethod('POST')) {
+			return $this->redirectResponse();
 		}
 
-		$this->render('setup/createuser.phtml', array(
-			'usersExist' => $usersExist,
-			'adminUser'  => $adminUser
-		), false);
+		// prepare work
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+		$db        = $container->getPersistence();
+		$action    = $request->post('dbaction', 'string');
+
+		// setup the database
+		try {
+			sly_Util_Setup::setupDatabase($action, $config, $db);
+		}
+		catch (Exception $e) {
+			$this->flash->appendWarning($e->getMessage());
+			return $this->initdbView();
+		}
+
+		// create/update user
+		$username = $request->post('username', 'string');
+		$password = $request->post('password', 'string');
+		$create   = !$request->post('no_user', 'boolean', false);
+		$info     = sly_Util_Setup::checkUser(array(), $config, $db);
+
+		try {
+			if (!$create && !$info['userExists']) {
+				throw new sly_Exception(t('must_create_first_user'));
+			}
+
+			if ($create) {
+				$service = $container->getUserService();
+				sly_Util_Setup::createOrUpdateUser($username, $password, $service);
+			}
+		}
+		catch (Exception $e) {
+			$this->flash->appendWarning($e->getMessage());
+			return $this->initdbView();
+		}
+
+		return $this->redirectResponse(array(), 'profit');
 	}
 
 	public function profitAction() {

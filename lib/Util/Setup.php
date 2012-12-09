@@ -9,6 +9,21 @@
  */
 
 class sly_Util_Setup {
+	public static function getRequiredTables(sly_Configuration $config) {
+		$prefix = $config->get('DATABASE/TABLE_PREFIX');
+
+		return array(
+			$prefix.'article',
+			$prefix.'article_slice',
+			$prefix.'clang',
+			$prefix.'file',
+			$prefix.'file_category',
+			$prefix.'user',
+			$prefix.'slice',
+			$prefix.'registry'
+		);
+	}
+
 	public static function checkSystem(array $viewParams) {
 		$errors   = $viewParams['errors'];
 		$tester   = new sly_Util_Requirements();
@@ -148,18 +163,8 @@ class sly_Util_Setup {
 	}
 
 	public static function checkDatabaseTables(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
-		$prefix         = $config->get('DATABASE/TABLE_PREFIX');
+		$requiredTables = self::getRequiredTables($config);
 		$availTables    = $db->listTables();
-		$requiredTables = array(
-			$prefix.'article',
-			$prefix.'article_slice',
-			$prefix.'clang',
-			$prefix.'file',
-			$prefix.'file_category',
-			$prefix.'user',
-			$prefix.'slice',
-			$prefix.'registry'
-		);
 
 		$actions      = array();
 		$intersection = array_intersect($requiredTables, $availTables);
@@ -198,23 +203,74 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	protected function setupImport($sqlScript) {
-		if (file_exists($sqlScript)) {
-			try {
-				$importer = new sly_DB_Importer();
-				$importer->import($sqlScript);
-			}
-			catch (Exception $e) {
-				$this->flash->addWarning($e->getMessage());
-				return false;
-			}
-		}
-		else {
-			$this->flash->addWarning(t('setup_import_dump_not_found'));
-			return false;
+	public static function setupDatabase($action, sly_Configuration $config, sly_DB_Persistence $db) {
+		$info = self::checkDatabaseTables(array(), $config, $db);
+
+		if (!in_array($action, $info['actions'], true)) {
+			throw new sly_Exception(t('invalid_database_action', $action));
 		}
 
-		return true;
+		switch ($action) {
+			case 'drop':
+				$requiredTables = self::getRequiredTables($config);
+
+				// 'DROP TABLE IF EXISTS' is MySQL-only...
+				foreach ($db->listTables() as $tblname) {
+					if (in_array($tblname, $requiredTables)) {
+						$db->query('DROP TABLE '.$tblname);
+					}
+				}
+
+				// fallthrough
+				// break;
+
+			case 'setup':
+				$driver   = $config->get('DATABASE/DRIVER');
+				$dumpFile = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
+
+				if (!file_exists($sqlScript)) {
+					throw new sly_Exception(t('dump_not_found', $dumpFile));
+				}
+
+				$importer = new sly_DB_Importer();
+				$importer->import($dumpFile);
+				break;
+		}
+	}
+
+	public static function createOrUpdateUser($username, $password, sly_Service_User $service) {
+		$username = trim($username);
+		$password = trim($password);
+
+		if (mb_strlen($username) === 0) {
+			throw new sly_Exception(t('no_admin_username_given'));
+		}
+
+		if (mb_strlen($password) === 0) {
+			throw new sly_Exception(t('no_admin_password_given'));
+		}
+
+		$user = $service->find(array('login' => $username));
+		$user = empty($user) ? new sly_Model_User() : reset($user);
+
+		$user->setName(ucfirst(strtolower($username)));
+		$user->setLogin($username);
+		$user->setRights('#admin[]#');
+		$user->setStatus(true);
+		$user->setCreateDate(time());
+		$user->setUpdateDate(time());
+		$user->setLastTryDate(null);
+		$user->setCreateUser('setup');
+		$user->setUpdateUser('setup');
+		$user->setPassword($password);
+		$user->setRevision(0);
+
+		try {
+			$service->save($user, $user);
+		}
+		catch (Exception $e) {
+			throw new sly_Exception(t('cant_create_admin', $e->getMessage()));
+		}
 	}
 
 	public static function renderFlashMessage() {
@@ -223,8 +279,8 @@ class sly_Util_Setup {
 		$result   = array();
 
 		foreach ($messages as $m) {
-			if (is_array($m)) $m = implode("<br />\n", $m);
-			$result[] = '<div class="alert alert-error">'.sly_html($m).'</div>';
+			if (is_array($m)) $m = implode("\n", $m);
+			$result[] = '<div class="alert alert-error">'.nl2br(sly_html($m)).'</div>';
 		}
 
 		$msg->clear();
