@@ -8,7 +8,34 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-class sly_Dispatcher_Setup extends sly_Dispatcher_Backend {
+class sly_Dispatcher_Setup extends sly_Dispatcher {
+	protected $container;
+	protected $prefix;
+
+	/**
+	 * Constructor
+	 *
+	 * @param sly_Container $container
+	 */
+	public function __construct(sly_Container $container, $containerClassPrefix) {
+		$this->container = $container;
+		$this->prefix    = $containerClassPrefix;
+	}
+
+	/**
+	 * handle a controller that printed its output
+	 *
+	 * @param string $content  the controller's captured output
+	 */
+	protected function handleStringResponse($content) {
+		$layout = $this->getContainer()->getLayout();
+
+		$layout->setContent($content);
+		$content = $layout->render();
+
+		return parent::handleStringResponse($content);
+	}
+
 	protected function handleControllerError(Exception $e, $controller, $action) {
 		// throw away all content (including notices and warnings)
 		while (ob_get_level()) ob_end_clean();
