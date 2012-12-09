@@ -16,13 +16,12 @@ class sly_Layout_Setup extends sly_Layout_XHTML5 {
 		$locale = $i18n->getLocale();
 		$base   = $request->getBaseUrl(true).'/';
 
-		$this->addCSSFile('assets/css/bootstrap.min.css');
 		$this->addCSSFile('assets/css/setup.less');
 
 		$this->addJavaScriptFile('assets/js/jquery.min.js');
-		$this->addJavaScriptFile('assets/js/bootstrap.min.js');
 		$this->addJavaScriptFile('assets/js/jquery.chosen.min.js');
-		$this->addJavaScriptFile('assets/js/passwordstrength.js');
+		$this->addJavaScriptFile('assets/js/bootstrap.min.js');
+		$this->addJavaScriptFile('assets/js/setup.js');
 
 		$this->setTitle('SallyCMS Setup');
 
