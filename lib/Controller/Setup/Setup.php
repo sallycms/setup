@@ -10,10 +10,13 @@
 
 class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sly_Controller_Interface {
 	protected $flash;
-	protected $results;
 
-	protected function init() {
+	protected function init($requireConnection = false, $requireValidDatabase = false) {
 		$this->flash = sly_Core::getFlashMessage();
+
+		if (!sly_Core::isSetup()) {
+			return new sly_Response('Setup is disabled.', 403);
+		}
 
 		// check system config and stop with an error page if any serious problems arise
 		$params = array('errors' => false);
@@ -25,6 +28,31 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		if ($params['errors']) {
 			$this->syscheckView($params);
 			return false;
+		}
+
+		if ($requireConnection) {
+			$container = $this->getContainer();
+			$config    = $container->getConfig();
+
+			// if there is no valid db config, go back to the config page
+			if (!sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false)) {
+				return $this->redirectResponse();
+			}
+
+			if ($requireValidDatabase) {
+				$db     = $container->getPersistence();
+				$params = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
+
+				if (!in_array('nop', $params['actions'])) {
+					return $this->redirectResponse(array(), 'initdb');
+				}
+
+				$params = sly_Util_Setup::checkUser(array(), $config, $db);
+
+				if (!$params['userExists']) {
+					return $this->redirectResponse(array(), 'initdb');
+				}
+			}
 		}
 
 		return true;
@@ -50,13 +78,15 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			$config->setLocal('INSTNAME', 'sly'.$systemID);
 		}
 
-		if ($this->init()) {
-			$this->configView();
+		if (($ret = $this->init()) !== true) {
+			return $ret;
 		}
+
+		$this->configView();
 	}
 
 	public function saveconfigAction() {
-		if (!$this->init()) return;
+		if (($ret = $this->init()) !== true) return $ret;
 
 		$request = $this->getRequest();
 
@@ -115,24 +145,13 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	public function initdbAction() {
-		if (!$this->init()) return;
+		if (($ret = $this->init(true)) !== true) return $ret;
+		$this->initdbView();
+	}
 
-		$container = $this->getContainer();
-		$config    = $container->getConfig();
-		$session   = $container->getSession();
-
-		// if there is no valid db config, go back to the config page
-		if (!sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false)) {
-			return $this->redirectResponse();
-		}
-
-		// check database status (all tables available, existing users)
-		$db     = $container->getPersistence();
-		$params = array('enabled' => array('index'));
-		$params = sly_Util_Setup::checkDatabaseTables($params, $config, $db);
-		$params = sly_Util_Setup::checkUser($params, $config, $db);
-
-		$this->render('setup/initdb.phtml', $params, false);
+	public function databaseAction() {
+		if (($ret = $this->init(true)) !== true) return $ret;
+		$this->initdbView();
 	}
 
 	public function createuserAction($redirected = false) {
@@ -203,9 +222,17 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		), false);
 	}
 
-	public function finishAction() {
-		$this->init();
-		sly_Core::config()->setLocal('SETUP', false);
+	public function profitAction() {
+		if (($ret = $this->init(true)) !== true) return $ret;
+		$this->render('setup/profit.phtml', array(), false);
+	}
+
+	public function loginAction() {
+		if (($ret = $this->init(true)) !== true) return $ret;
+
+		$config = $this->getContainer()->getConfig();
+		$config->setLocal('SETUP', false);
+
 		$this->render('setup/finish.phtml', array(), false);
 	}
 
@@ -233,6 +260,17 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 		$params = sly_Util_Setup::checkSystem($params);
 		$this->render('setup/index.phtml', $params, false);
+	}
+
+	protected function initdbView() {
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+		$db        = $container->getPersistence();
+		$params    = array('enabled' => array('index'));
+		$params    = sly_Util_Setup::checkDatabaseTables($params, $config, $db);
+		$params    = sly_Util_Setup::checkUser($params, $config, $db);
+
+		$this->render('setup/initdb.phtml', $params, false);
 	}
 
 	protected function syscheckView(array $viewParams) {

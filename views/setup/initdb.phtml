@@ -20,7 +20,7 @@ $first = reset($actions);
 
 		<div class="span10 pull-right">
 			<?php foreach ($actions as $action): ?>
-			<label class="radio"><input type="radio" name="dbAction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked" autofocus="autofocus"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
+			<label class="radio"><input type="radio" name="dbaction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked" autofocus="autofocus"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
 			<?php endforeach ?>
 		</div>
 	</fieldset>
@@ -35,7 +35,7 @@ $first = reset($actions);
 				<input type="text" name="username" id="username" placeholder="admin" class="span3" required="required" />
 
 				<div class="input-append span3">
-					<input type="text" name="password" id="password" placeholder="mypassword" required="required" />
+					<input type="text" name="password" id="userpassword" placeholder="mypassword" required="required" />
 					<button class="btn" type="button" id="gen_password"><i class="icon-repeat"></i> <?php print t('generate') ?></button>
 				</div>
 			</div>
@@ -58,89 +58,3 @@ $first = reset($actions);
 		</div>
 	</fieldset>
 </form>
-
-<script type="text/javascript">
-jQuery(function($) {
-	$('#no_user').on('change', function() {
-		$('#username,#password,#gen_password').prop('disabled', this.checked);
-	});
-	$('input[name="dbAction"]').on('change', function() {
-		var requireUser = $(this).val() !== 'nop';
-
-		$('#no_user').prop('disabled', requireUser);
-		$('#no_user').parent().toggleClass('muted', requireUser);
-
-		if (requireUser) {
-			$('#no_user').prop('checked', false).trigger('change');
-		}
-	});
-
-	$('input[name="dbAction"]:checked').trigger('change');
-
-	$('#gen_password').on('click', function() {
-		var
-			letter    = /[a-zA-Z]$/,
-			vowel     = /[aeiouAEIOU]$/,
-			consonant = /[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]$/,
-			password  = function(length, memorable, pattern, prefix) {
-				var char, n;
-
-				if (length == null) {
-					length = 10;
-				}
-
-				if (memorable == null) {
-					memorable = true;
-				}
-
-				if (pattern == null) {
-					pattern = /\w/;
-				}
-
-				if (prefix == null) {
-					prefix = '';
-				}
-
-				if (prefix.length >= length) {
-					return prefix;
-				}
-
-				if (memorable) {
-					if (prefix.match(consonant)) {
-						pattern = vowel;
-					}
-					else {
-						pattern = consonant;
-					}
-				}
-
-				n    = (Math.floor(Math.random() * 100) % 94) + 33;
-				char = String.fromCharCode(n);
-
-				if (memorable) {
-					char = char.toLowerCase();
-				}
-
-				if (!char.match(pattern)) {
-					return password(length, memorable, pattern, prefix);
-				}
-
-				return password(length, memorable, pattern, "" + prefix + char);
-			};
-
-		$('#password').val(password(15, false)).trigger('keyup');
-	});
-
-	$('#password').on('keyup', function() {
-		var
-			password = $(this).val(),
-			meter    = new wv.PasswordStrength(),
-			score    = meter.classify(password);
-
-		$(this).parent()
-			.removeClass('st-unknown st-very-weak st-weak st-fair st-strong st-very-strong')
-			.addClass('st-' + meter.getClassName(score))
-		;
-	});
-});
-</script>

@@ -26,6 +26,7 @@ foreach ($all as $driver => $title) {
 }
 
 $multiDriver = count($available) > 1;
+$timezone    = sly_Form_Helper::getTimezoneSelect('timezone', $timezone);
 
 ?>
 <form class="form-horizontal" action="<?php print $_router->getUrl('saveconfig') ?>" method="post">
@@ -47,7 +48,7 @@ $multiDriver = count($available) > 1;
 		<div class="control-group">
 			<label class="control-label" for="timezone"><?php print t('timezone') ?>:</label>
 			<div class="controls">
-				<input type="text" id="timezone" placeholder="Europe/Berlin" />
+				<?php print $timezone->render() ?>
 			</div>
 		</div>
 
@@ -76,11 +77,13 @@ $multiDriver = count($available) > 1;
 				<input type="text" name="host" id="host" placeholder="localhost" class="span3" required="required" value="<?php print sly_html($database['host']) ?>" />
 
 				<?php if ($multiDriver): ?>
-				<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
-					<?php foreach ($available as $key => $name): ?>
-					<option value="<?php print $key ?>"<?php print $key === $database['driver'] ? ' selected="selected"' : '' ?>><?php print $name ?></option>
-					<?php endforeach ?>
-				</select>
+				<div class="span3">
+					<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
+						<?php foreach ($available as $key => $name): ?>
+						<option value="<?php print $key ?>"<?php print $key === $database['driver'] ? ' selected="selected"' : '' ?>><?php print $name ?></option>
+						<?php endforeach ?>
+					</select>
+				</div>
 				<?php endif ?>
 			</div>
 		</div>
@@ -126,20 +129,3 @@ $multiDriver = count($available) > 1;
 		</div>
 	</fieldset>
 </form>
-
-<script type="text/javascript">
-jQuery(function($) {
-	// enable bootstrap's tooltips
-	$('[rel=tooltip]').tooltip();
-
-	// disable host,user,pass when selecting SQLite
-	$('#driver').change(function() {
-		var disable = $(this).val() === 'sqlite';
-
-		$('#host,#username,#password,#create').prop('disabled', disable);
-		$('#create').parent().toggle(!disable);
-		$('#database').parent().toggleClass('input-append', disable);
-		$('.add-on').css({display: disable ? 'inline-block' : 'none'});
-	}).change();
-});
-</script>
