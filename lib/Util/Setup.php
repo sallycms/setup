@@ -97,7 +97,7 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function checkDatabaseConnection(array $config, $create) {
+	public static function checkDatabaseConnection(array $config, $create, $silent = false) {
 		extract($config);
 
 		try {
@@ -142,7 +142,7 @@ class sly_Util_Setup {
 			return true;
 		}
 		catch (Exception $e) {
-			sly_Core::getFlashMessage()->appendWarning($e->getMessage());
+			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
 			return false;
 		}
 	}
