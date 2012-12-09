@@ -17,6 +17,7 @@ configure: Konfigurieren
 setup: Einrichten
 profit: Profit!
 read_license: 'Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.'
+must_accept_license: 'Sie müssen den Lizenzbedingungen zustimmen, um das Setup fortzusetzen.'
 database_access: Datenbank-Zugang
 please_fix_problems_to_continue: Das Setup kann aufgrund der o.g. Fehler nicht fortgesetzt werden. Bitte überprüfen Sie die Konfiguration des Servers und beheben Sie ausstehende Probleme.
 non_mysql_is_experimental: Alle Datenbanken außer MySQL sind als hoch experimentell anzusehen und dienen zu Testzwecken.
@@ -78,3 +79,14 @@ closing_notes: |
   Das Setup wird zur Sicherheit deaktiviert, wenn Sie auf den obigen Button
   klicken. Sie können es im Backend jedoch jederzeit bei Bedarf wieder
   re-aktivieren.
+invalid_driver: 'Der ausgewählte PDO-Treiber ({0}) ist nicht verfügbar!'
+invalid_database_action: 'Die ausgewählte Funktion "{0}" steht nicht zur Verfügung!'
+dump_not_found: 'Der Installations-Dump {0} konnte nicht gefunden werden!'
+no_admin_username_given: Es wurde kein Benutzername für das Nutzerkonto angegeben.
+no_admin_password_given: Es wurde kein Password für das Nutzerkonto angegeben.
+cant_create_admin: 'Konnte Nutzerkonto nicht anlegen: {0}'
+redirect_to: 'Sie werden <a href="{0}">weitergeleitet</a>.'
+must_create_first_user: 'Sie müssen ein erstes Nutzerkonto einrichten!'
+controller_error: Controller-Ausnahme
+unexpected_exception: Unerwartete Ausnahme
+unknown_action: 'Methode {0} in {1} nicht gefunden!'

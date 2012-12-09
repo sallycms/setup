@@ -118,7 +118,7 @@ class sly_Util_Setup {
 			$drivers = sly_DB_PDO_Driver::getAvailable();
 
 			if (!in_array($DRIVER, $drivers)) {
-				throw new sly_Exception(t('setup_invalid_driver'));
+				throw new sly_Exception(t('invalid_driver', $DRIVER));
 			}
 
 			// open connection

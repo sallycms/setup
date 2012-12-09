@@ -17,6 +17,7 @@ configure: Configure
 setup: Setup
 profit: Profit!
 read_license: 'I have read the <a href="">MIT license</a> and accept its terms.'
+must_accept_license: 'You have to agree to the license agreements in order to continue the setup.'
 database_access: Database Access
 please_fix_problems_to_continue: Setup cannot continue due to the problems above. Please review the server's configuration and fix any outstanding issues in order to proceed.
 non_mysql_is_experimental: All drivers except for MySQL are highly experimental and only for testing purposes.
@@ -82,3 +83,14 @@ go_to_backend_login: Go to Backend Login
 closing_notes: |
   For security reasons, the setup will be disabled once you click on the button
   above. You can re-enable it at any time on the backend's system page.
+invalid_driver: 'The chosen PDO driver ({0}) is not available!'
+invalid_database_action: 'The chosen function "{0}" is not available!'
+dump_not_found: 'The installation dump {0} could not be found!'
+no_admin_username_given: No username for the account given.
+no_admin_password_given: No (new) password for the account given.
+cant_create_admin: 'Could not create user account: {0}'
+redirect_to: 'You are being <a href="{0}">redirected</a>.'
+must_create_first_user: 'You must create a first user account!'
+controller_error: Controller Exception
+unexpected_exception: Unexpected Exception
+unknown_action: 'Method {0} in {1} not found!'
