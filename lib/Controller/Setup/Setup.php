@@ -200,7 +200,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 	public function profitAction() {
 		if (($ret = $this->init(true)) !== true) return $ret;
-		$this->render('setup/profit.phtml', array(), false);
+		$this->render('setup/profit.phtml', array('enabled' => array('index')), false);
 	}
 
 	public function loginAction() {
