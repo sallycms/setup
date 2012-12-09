@@ -128,7 +128,8 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 		// check database status (all tables available, existing users)
 		$db     = $container->getPersistence();
-		$params = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
+		$params = array('enabled' => array('index'));
+		$params = sly_Util_Setup::checkDatabaseTables($params, $config, $db);
 		$params = sly_Util_Setup::checkUser($params, $config, $db);
 
 		$this->render('setup/initdb.phtml', $params, false);
@@ -246,7 +247,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$container = $this->getContainer();
 		$config    = $container->getConfig();
 
-		if (sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false)) {
+		if (sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false, true)) {
 			$params['enabled'][] = 'initdb';
 
 			$db   = $container->getPersistence();
