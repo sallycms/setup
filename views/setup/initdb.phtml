@@ -8,7 +8,7 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-print $this->render('layout/navigation.phtml', array('enabled' => array('index', 'initdb'), 'active' => 'initdb'));
+print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'active' => 'initdb'));
 
 $first = reset($actions);
 

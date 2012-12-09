@@ -218,6 +218,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			'timezone'    => $config->get('TIMEZONE'),
 			'errors'      => false,
 			'license'     => $session->get('license', 'bool', false),
+			'enabled'     => array('index'),
 			'database'    => array(
 				'driver'   => $database['DRIVER'],
 				'host'     => $database['HOST'],
@@ -235,5 +236,28 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 	protected function syscheckView(array $viewParams) {
 		$this->render('setup/syscheck.phtml', $viewParams, false);
+	}
+
+	protected function render($filename, array $params = array(), $returnOutput = true) {
+		// make router available to all controller views
+		$router = $this->getContainer()->getApplication()->getRouter();
+		$params = array_merge(array('_router' => $router), $params);
+
+		$container = $this->getContainer();
+		$config    = $container->getConfig();
+
+		if (sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false)) {
+			$params['enabled'][] = 'initdb';
+
+			$db   = $container->getPersistence();
+			$info = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
+			$info = sly_Util_Setup::checkUser($info, $config, $db);
+
+			if ($info['userExists'] && in_array('nop', $info['actions'])) {
+				$params['enabled'][] = 'profit';
+			}
+		}
+
+		return parent::render($filename, $params, $returnOutput);
 	}
 }
