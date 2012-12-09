@@ -72,3 +72,13 @@ create_admin_help: |
 dont_create_user: create no account
 generate: generate
 finish_setup: 'Finish Setup &raquo;'
+finish_setup: 'Setup abschließen &raquo;'
+congratulations: Congratulations!
+setup_finished: |
+  You have successfully completed the SallyCMS setup. You can now log-in into
+  the backend and begin to configure the project, add your content and adjust
+  the system settings.
+go_to_backend_login: Go to Backend Login
+closing_notes: |
+  For security reasons, the setup will be disabled once you click on the button
+  above. You can re-enable it at any time on the backend's system page.

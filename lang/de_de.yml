@@ -68,3 +68,13 @@ create_admin_help: |
 dont_create_user: keinen Benutzer anlegen
 generate: erzeugen
 finish_setup: 'Setup abschließen &raquo;'
+congratulations: Glückwunsch!
+setup_finished: |
+  Sie haben das Setup von SallyCMS erfolgreich beendet. Sie können sich nur im
+  Backend einloggen und beginnen, das Projekt einzurichten, erste Inhalte
+  einzupflegen und auch die Konfiguration weiter anzupassen.
+go_to_backend_login: Zum Backend-Login
+closing_notes: |
+  Das Setup wird zur Sicherheit deaktiviert, wenn Sie auf den obigen Button
+  klicken. Sie können es im Backend jedoch jederzeit bei Bedarf wieder
+  re-aktivieren.
