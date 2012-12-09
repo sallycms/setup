@@ -38,7 +38,6 @@ class sly_Util_Setup {
 		$results['magic_quotes']     = array($disabled, $disabled, $tester->magicQuotes());
 		$results['safe_mode']        = array($disabled, $disabled, $tester->safeMode());
 		$results['open_basedir']     = array($disabled, $disabled, $tester->openBasedir());
-		$results['open_basedir']     = array($disabled, $disabled, $tester->openBasedir());
 
 		foreach ($exts as $ext => $required) {
 			$key           = 'ext_'.$ext;
@@ -228,7 +227,7 @@ class sly_Util_Setup {
 				$driver   = $config->get('DATABASE/DRIVER');
 				$dumpFile = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
 
-				if (!file_exists($sqlScript)) {
+				if (!file_exists($dumpFile)) {
 					throw new sly_Exception(t('dump_not_found', $dumpFile));
 				}
 
@@ -255,7 +254,7 @@ class sly_Util_Setup {
 
 		$user->setName(ucfirst(strtolower($username)));
 		$user->setLogin($username);
-		$user->setRights('#admin[]#');
+		$user->setIsAdmin(true);
 		$user->setStatus(true);
 		$user->setCreateDate(time());
 		$user->setUpdateDate(time());
