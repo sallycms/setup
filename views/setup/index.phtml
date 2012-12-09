@@ -40,7 +40,7 @@ $multiDriver = count($available) > 1;
 		<div class="control-group">
 			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
 			<div class="controls">
-				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
+				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" required="required" />
 			</div>
 		</div>
 
@@ -60,7 +60,7 @@ $multiDriver = count($available) > 1;
 		<div class="control-group">
 			<div class="controls">
 				<label class="checkbox">
-					<input type="checkbox" name="license" value="1"<?php print $license ? ' checked="checked"' : '' ?> /> <?php print t('read_license') ?>
+					<input type="checkbox" name="license" value="1"<?php print $license ? ' checked="checked"' : '' ?> required="required" /> <?php print t('read_license') ?>
 				</label>
 			</div>
 		</div>
@@ -73,7 +73,7 @@ $multiDriver = count($available) > 1;
 		<div class="control-group">
 			<label class="control-label" for="host"><?php print t($multiDriver ? 'host_and_driver' : 'host') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" name="host" id="host" placeholder="localhost" class="span3" value="<?php print sly_html($database['host']) ?>" />
+				<input type="text" name="host" id="host" placeholder="localhost" class="span3" required="required" value="<?php print sly_html($database['host']) ?>" />
 
 				<?php if ($multiDriver): ?>
 				<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
@@ -88,8 +88,8 @@ $multiDriver = count($available) > 1;
 		<div class="control-group">
 			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
 			<div class="controls controls-row">
-				<input type="text" name="username" id="username" value="<?php print sly_html($database['username']) ?>" placeholder="username" class="span3" />
-				<input type="text" name="password" id="password" value="<?php print sly_html($database['password']) ?>" placeholder="mypassword" class="span3" />
+				<input type="text" name="username" id="username" value="<?php print sly_html($database['username']) ?>" placeholder="username" required="required" class="span3" />
+				<input type="text" name="password" id="password" value="<?php print sly_html($database['password']) ?>" placeholder="mypassword" required="required" class="span3" />
 			</div>
 		</div>
 		<?php endif ?>
@@ -102,7 +102,7 @@ $multiDriver = count($available) > 1;
 			<label class="control-label" for="database"><?php print t('database') ?>:</label>
 			<div class="controls controls-row">
 				<div class="span3" style="margin-left:0" id="database-container">
-					<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" class="span3" placeholder="mydatabase" />
+					<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" class="span3" required="required" placeholder="mydatabase" />
 					<span class="add-on" style="display:none">.sq3</span>
 				</div>
 
