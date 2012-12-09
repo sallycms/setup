@@ -10,44 +10,46 @@
 
 print $this->render('layout/navigation.phtml', array('enabled' => array('index', 'initdb'), 'active' => 'initdb'));
 
+$first = reset($actions);
+
 ?>
-<form class="form-horizontal" action="<?php print $_router->getUrl('initdb') ?>" method="post">
+<form class="form-horizontal" action="<?php print $_router->getUrl('database') ?>" method="post">
 	<fieldset>
-		<legend><?php print t('general_config') ?></legend>
+		<legend><?php print t('init_database') ?></legend>
+		<p><?php print t('init_database_help') ?></p>
 
-		<div class="control-group">
-			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
-			<div class="controls">
-				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" />
-			</div>
-		</div>
-
-		<div class="control-group">
-			<label class="control-label" for="timezone"><?php print t('timezone') ?>:</label>
-			<div class="controls">
-				<input type="text" id="timezone" placeholder="Europe/Berlin" />
-			</div>
+		<div class="span10 pull-right">
+			<?php foreach ($actions as $action): ?>
+			<label class="radio"><input type="radio" name="dbAction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
+			<?php endforeach ?>
 		</div>
 	</fieldset>
 
 	<fieldset>
 		<legend><?php print t('create_admin') ?></legend>
+		<p><?php print t('create_admin_help') ?></p>
 
 		<div class="control-group">
 			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
 			<div class="controls controls-row">
 				<input type="text" name="username" id="username" placeholder="admin" class="span3" />
-				<input type="text" name="password" id="password" placeholder="mypassword" class="span3" />
+
+				<div class="input-append span3">
+					<input type="text" name="password" id="password" placeholder="mypassword" />
+					<button class="btn" type="button" id="gen_password"><i class="icon-repeat"></i> <?php print t('generate') ?></button>
+				</div>
 			</div>
 		</div>
 
+		<?php if ($userExists): ?>
 		<div class="control-group">
-			<div class="controls span2">
+			<div class="controls span5">
 				<label class="checkbox">
-					<input type="checkbox" name="create" id="create" value="1" /> <?php print t('create') ?>
+					<input type="checkbox" name="no_user" id="no_user" value="1" /> <?php print t('dont_create_user') ?>
 				</label>
 			</div>
 		</div>
+		<?php endif ?>
 
 		<?php print sly_Util_Setup::renderFlashMessage() ?>
 

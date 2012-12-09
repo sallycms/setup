@@ -26,7 +26,7 @@ database: Database
 create: create
 table_prefix: Table Prefix
 table_prefix_help: 'does not need to be changed in most cases; allows for multiple projects in one database'
-next_step: 'Proceed with next step  &raquo;'
+next_step: 'Proceed to Next Step &raquo;'
 system_configuration: System Configuration
 php_version: PHP Version
 limits: Limits
@@ -48,3 +48,27 @@ http_access_protection_todo: 'Please create the required file manually or adjust
 pdo_driver: Database Drivers
 pdo_driver_help: 'SallyCMS requires PDO as well as at least the <code>pdo_mysql</code> driver, in order to communicate with the database. The extension could not be found, however.'
 host: Host
+init_database: Setup Database
+init_database_help: |
+  In order to use SallyCMS, some database tables need to be created. You can choose
+  between the following options, how to setup your database.
+db_action_setup: |
+  <i class="icon-wrench"></i> <strong>Prepare Empty Database</strong><br />
+  This will create new database tables inside an empty, existing database.
+db_action_drop: |
+  <i class="icon-trash"></i> <strong>Overwrite Existing Database</strong><br />
+  This will create new database tables inside an existing database.
+  All required tables are removed (dropped) before the new tables are created.
+db_action_nop: |
+  <i class="icon-forward"></i> <strong>No Changes</strong><br />
+  This will perform no action on the configured database. All required tables must
+  already be present.
+create_admin: Create Admin Account
+create_admin_help: |
+  You have to create a first user account in order to log into the backend after
+  finishing the setup. Please enter your desired username and a strong password.
+  If the chosen username already exists, the user's password will be overwritten
+  with your new password.
+dont_create_user: create no account
+generate: generate
+finish_setup: 'Finish Setup &raquo;'
