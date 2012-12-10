@@ -94,3 +94,6 @@ must_create_first_user: 'You must create a first user account!'
 controller_error: Controller Exception
 unexpected_exception: Unexpected Exception
 unknown_action: 'Method {0} in {1} not found!'
+database_server_too_old: "The target database server is too old and incompatible with Sally.<br />You need at least version {1}, but {0} has been detected."
+database_server_old_but_okay: "The target database server is out of date but still compatible.<br />Version {1}+ is recommended, but {0} has been detected."
+database_server_is_up_to_date: "The target database server is up-to-date (version {0})."
