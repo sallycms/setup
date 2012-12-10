@@ -36,14 +36,14 @@ class sly_Util_Requirements {
 		$version = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 
 		if (version_compare($version, $constraints[self::WARNING], '<')) {
-			return $this->failed(t('setup_database_server_too_old', $version, $constraints[self::WARNING]));
+			return $this->failed(t('database_server_too_old', $version, $constraints[self::WARNING]));
 		}
 
 		if (version_compare($version, $constraints[self::WARNING], '>=') && version_compare($version, $constraints[self::OK], '<')) {
-			return $this->warning(t('setup_database_server_old_but_okay', $version, $constraints[self::OK]));
+			return $this->warning(t('database_server_old_but_okay', $version, $constraints[self::OK]));
 		}
 
-		return $this->ok(t('setup_database_server_is_up_to_date', $version, $constraints[self::OK]));
+		return $this->ok(t('database_server_is_up_to_date', $version));
 	}
 
 	/**

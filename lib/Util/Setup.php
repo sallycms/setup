@@ -138,13 +138,8 @@ class sly_Util_Setup {
 			$helper = new sly_Util_Requirements();
 			$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
 
-			// warn only, but continue workflow
-			if ($result['status'] === sly_Util_Requirements::WARNING) {
-				$this->flash->appendWarning($result['text']);
-			}
-
 			// stop further code
-			elseif ($result['status'] === sly_Util_Requirements::FAILED) {
+			if ($result['status'] === sly_Util_Requirements::FAILED) {
 				throw new sly_Exception($result['text']);
 			}
 
