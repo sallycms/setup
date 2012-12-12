@@ -8,26 +8,12 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-$showTrace = false;
-$response  = sly_Core::getResponse();
-
-if ($e instanceof sly_Controller_Exception) {
-	if ($e->getCode() === 404) $response->setStatusCode(404);
-	$title = t('controller_error');
-}
-else {
-	$response->setStatusCode(500);
-
-	$title     = t('unexpected_exception');
-	$showTrace = sly_Core::isDeveloperMode();
-}
-
 ?>
 <div class="alert alert-error">
 	<h4><?php print sly_html($title) ?></h4>
-	<?php print sly_html($e->getMessage()) ?>
+	<?php print sly_html($message) ?>
 </div>
 
-<?php if ($showTrace): ?>
-<pre class="prescrollable"><?php print sly_html($e->getTraceAsString()) ?></pre>
+<?php if (!empty($trace)): ?>
+<pre class="prescrollable"><?php print sly_html($trace) ?></pre>
 <?php endif ?>

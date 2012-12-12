@@ -16,7 +16,26 @@ class sly_Controller_Setup_Error extends sly_Controller_Setup_Base implements sl
 	}
 
 	public function indexAction() {
-		$this->render('error/index.phtml', array('e' => $this->exception), false);
+		$trace    = '';
+		$message  = $this->exception->getMessage();
+		$response = $this->container->getResponse();
+
+		if ($this->exception instanceof sly_Controller_Exception) {
+			if ($e->getCode() === 404) $response->setStatusCode(404);
+			$title = t('controller_error');
+		}
+		else {
+			$response->setStatusCode(500);
+			$title = t('unexpected_exception');
+		}
+
+		if (sly_Core::isDeveloperMode()) {
+			$trace = $this->exception->getTraceAsString();
+		}
+		
+		$content = $this->render('error/index.phtml', compact('title', 'trace', 'message'));
+		$response->setContent($content);
+		return $response;
 	}
 
 	public function checkPermission($action) {
