@@ -19,6 +19,11 @@
     "homepage": "http://www.sallycms.de/",
     "license": "MIT",
     "type": "sallycms-app",
+    "autoload": {
+        "psr-0": {
+            "sly_": "lib/"
+        }
+    },
     "require": {
         "php": ">=5.2.1",
         "sallycms/core": "0.8.x-dev",
