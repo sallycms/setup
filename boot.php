@@ -9,7 +9,7 @@
  */
 
 // add the setup app
-sly_Loader::addLoadPath(SLY_SALLYFOLDER.'/setup/lib/', 'sly_');
+sly_Loader::addLoadPath(SLY_SALLYFOLDER.'/setup/lib/');
 
 // init the app
 $app = new sly_App_Setup();
