@@ -8,9 +8,6 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-// add the setup app
-sly_Loader::addLoadPath(SLY_SALLYFOLDER.'/setup/lib/');
-
 // init the app
 $app = new sly_App_Setup();
 sly_Core::setCurrentApp($app);
