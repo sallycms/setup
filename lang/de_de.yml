@@ -1,0 +1,95 @@
+lang: Deutsch
+compatible_but_old: 'Empfehlung: {0}'
+requires_at_least: 'Mindestanforderung: {0}'
+exec_time: '{0}s, änderbar'
+memory: '{0}MB, änderbar'
+enabled: aktiviert
+disabled: deaktiviert
+welcome: Willkommen
+intro: |
+  Dieser Assistent führt Sie durch die notwendigen Schritte, um ein
+  SallyCMS-Projekt zu installieren. Füllen Sie alle Angaben aus, um
+  im zweiten Schritt die Datenbank und erste Nutzerkonten einzurichten.
+general_config: Allgemeine Angaben
+projectname: Projektname
+timezone: Zeitzone
+configure: Konfigurieren
+setup: Einrichten
+profit: Profit!
+read_license: 'Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.'
+must_accept_license: 'Sie müssen den Lizenzbedingungen zustimmen, um das Setup fortzusetzen.'
+database_access: Datenbank-Zugang
+please_fix_problems_to_continue: Das Setup kann aufgrund der o.g. Fehler nicht fortgesetzt werden. Bitte überprüfen Sie die Konfiguration des Servers und beheben Sie ausstehende Probleme.
+non_mysql_is_experimental: Alle Datenbanken außer MySQL sind als hoch experimentell anzusehen und dienen zu Testzwecken.
+host_and_driver: 'Host &amp; Datenbank-Typ'
+username_and_password: 'Benutzer &amp; Passwort'
+database: Datenbank
+create: anlegen
+table_prefix: Tabellen-Präfix
+table_prefix_help: 'muss i.d.R. nicht geändert werden; erlaubt es, mehrere Projekte in einer Datenbank zu verwalten'
+next_step: 'Zum nächsten Schritt  &raquo;'
+system_configuration: Systemkonfiguration
+php_version: PHP-Version
+limits: Limits
+php_settings: Einstellungen
+php_extensions: Erweiterungen
+system_directories: Systemverzeichnisse
+system_directories_help: 'Zur korrekten Funktionsweise müssen die folgenden Verzeichnisse existieren, konnten allerdings nicht automatisch angelegt werden:'
+system_directories_todo: 'Bitte legen Sie die Verzeichnisse manuell an.'
+http_access_protection: HTTP-Zugriffsschutz
+http_access_protection_help: |
+  Zur Sicherheit gegen unautorisierten Zugriff müssen einige Verzeichnisse mit
+  <code>.htaccess</code>-Dateien geschützt werden. Die folgenden Verzeichnisse
+  konnten nicht automatisch geschützt werden:
+http_access_protection_todo: 'Bitte korrigieren Sie die Verzeichnisrechte oder legen Sie die nötige Datei manuell an.'
+pdo_driver: Datenbank-Treiber
+pdo_driver_help: 'SallyCMS benötigt PDO sowie mindestens den <code>pdo_mysql</code>-Treiber, um mit der Datenbank zu kommunizieren. Diese Erweiterung ist allerdings nicht geladen.'
+host: Host
+init_database: Datenbank einrichten
+init_database_help: |
+  Zur Nutzung von SallyCMS müssen einige Datenbank-Tabellen angelegt werden. Sie können
+  hier auswählen, wie Ihre Datenbank eingerichtet werden soll.
+db_action_setup: |
+  <i class="icon-wrench"></i> <strong>Leere Datenbank einrichten</strong><br />
+  Mit dieser Funktion wird eine leere, bereits bestehende Datenbank neu eingerichtet.
+db_action_drop: |
+  <i class="icon-trash"></i> <strong>Vorhandene Datenbank überschreiben</strong><br />
+  Mit dieser Funktion wird eine bereits bestehende Datenbank neu eingerichtet.
+  Hierbei werden die von SallyCMS benötigten Tabellen vorher gelöscht.
+db_action_nop: |
+  <i class="icon-forward"></i> <strong>Keine Änderung</strong><br />
+  Hierbei werden keinerlei Änderungen an der Datenbank vorgenommen. Alle benötigten
+  Tabellen müssen bereits in den korrekten Versionen vorliegen.
+create_admin: Administrator-Account anlegen
+create_admin_help: |
+  Sie müssen ein erstes Nutzerkonto einrichten, um sich im Anschluss an das Setup
+  im Backend einloggen zu können. Geben Sie dazu den Benutzernamen und ein
+  sicheres Passwort an. Falls der gewählte Benutzer bereits existiert, wird sein
+  Passwort durch Ihre Eingabe überschrieben.
+dont_create_user: keinen Benutzer anlegen
+generate: erzeugen
+finish_setup: 'Setup abschließen &raquo;'
+congratulations: Glückwunsch!
+setup_finished: |
+  Sie haben das Setup von SallyCMS erfolgreich beendet. Sie können sich nur im
+  Backend einloggen und beginnen, das Projekt einzurichten, erste Inhalte
+  einzupflegen und auch die Konfiguration weiter anzupassen.
+go_to_backend_login: Zum Backend-Login
+closing_notes: |
+  Das Setup wird zur Sicherheit deaktiviert, wenn Sie auf den obigen Button
+  klicken. Sie können es im Backend jedoch jederzeit bei Bedarf wieder
+  re-aktivieren.
+invalid_driver: 'Der ausgewählte PDO-Treiber ({0}) ist nicht verfügbar!'
+invalid_database_action: 'Die ausgewählte Funktion "{0}" steht nicht zur Verfügung!'
+dump_not_found: 'Der Installations-Dump {0} konnte nicht gefunden werden!'
+no_admin_username_given: Es wurde kein Benutzername für das Nutzerkonto angegeben.
+no_admin_password_given: Es wurde kein Password für das Nutzerkonto angegeben.
+cant_create_admin: 'Konnte Nutzerkonto nicht anlegen: {0}'
+redirect_to: 'Sie werden <a href="{0}">weitergeleitet</a>.'
+must_create_first_user: 'Sie müssen ein erstes Nutzerkonto einrichten!'
+controller_error: Controller-Ausnahme
+unexpected_exception: Unerwartete Ausnahme
+unknown_action: 'Methode {0} in {1} nicht gefunden!'
+database_server_too_old: "Der angegebene Datenbank-Server ist zu alt und inkompatibel mit Sally.\nEs wird mindestens Version {1} benötigt, es wurde aber {0} ermittelt."
+database_server_old_but_okay: "Der angegebene Datenbank-Server ist veraltet, aber noch kompatibel.\nVersion {1}+ wird empfohlen, es wurde aber {0} ermittelt."
+database_server_is_up_to_date: "Der angegebene Datenbank-Server ist auf dem aktuellen Stand (Version {0})."
