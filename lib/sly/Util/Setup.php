@@ -111,6 +111,15 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
+	/**
+	 * check database connection
+	 *
+	 * @param  array   $config
+	 * @param  boolean $create
+	 * @param  boolean $silent
+	 * @param  boolean $throwException
+	 * @return sly_DB_PDO_Persistence   the created persistence
+	 */
 	public static function checkDatabaseConnection(array $config, $create, $silent = false, $throwException = false) {
 		extract($config);
 
@@ -121,12 +130,17 @@ class sly_Util_Setup {
 				throw new sly_Exception(t('invalid_driver', $DRIVER));
 			}
 
+			// OCI is impossible to create and SQLite doesn't have a CREATE DATABASE command
+			if ($DRIVER === 'sqlite' || $DRIVER === 'oci') {
+				$create = false;
+			}
+
 			// open connection
 			if ($create) {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, null, $TABLE_PREFIX);
 			}
 			else {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
 			}
 
 			// prepare version check, retrieve min versions from driver
@@ -148,12 +162,12 @@ class sly_Util_Setup {
 				$db->query($createStmt);
 			}
 
-			return true;
+			return $db;
 		}
 		catch (Exception $e) {
 			if ($throwException) throw $e;
 			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
-			return false;
+			return null;
 		}
 	}
 
@@ -197,7 +211,7 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db) {
+	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db, $output = null) {
 		$info = self::checkDatabaseTables(array(), $tablePrefix, $db);
 
 		if (!in_array($action, $info['actions'], true)) {
@@ -206,6 +220,10 @@ class sly_Util_Setup {
 
 		switch ($action) {
 			case 'drop':
+				if ($output) {
+					$output->write('  Dropping database tables...');
+				}
+
 				$requiredTables = self::getRequiredTables($tablePrefix);
 
 				// 'DROP TABLE IF EXISTS' is MySQL-only...
@@ -215,11 +233,19 @@ class sly_Util_Setup {
 					}
 				}
 
+				if ($output) {
+					$output->writeln(' <info>success</info>.');
+				}
+
 				// fallthrough
 				// break;
 
 			case 'setup':
 				$dumpFile = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
+
+				if ($output) {
+					$output->write('  Creating database tables...');
+				}
 
 				if (!file_exists($dumpFile)) {
 					throw new sly_Exception(t('dump_not_found', $dumpFile));
@@ -227,6 +253,10 @@ class sly_Util_Setup {
 
 				$importer = new sly_DB_Importer();
 				$importer->import($dumpFile);
+
+				if ($output) {
+					$output->writeln(' <info>success</info>.');
+				}
 				break;
 		}
 	}

@@ -17,6 +17,7 @@ use sly\Console\Command\Base;
 class sly_Console_Command_Install extends Base {
 	protected $availableDbOptions = null;
 	protected $userExists         = null;
+	protected $databaseConfig     = null;
 
 	protected function configure() {
 		$this
@@ -33,7 +34,7 @@ class sly_Console_Command_Install extends Base {
 				new InputOption('db-host', null, InputOption::VALUE_REQUIRED, 'The database host', 'localhost'),
 				new InputOption('db-driver', null, InputOption::VALUE_REQUIRED, 'The database driver to use', 'mysql'),
 				new InputOption('db-prefix', null, InputOption::VALUE_REQUIRED, 'The database table prefix', 'sly_'),
-				new InputOption('no-db-init', null, InputOption::VALUE_NONE, 'To perform no changes to the database.'),
+				new InputOption('db-init', null, InputOption::VALUE_REQUIRED, 'The database init action to perform (drop, setup or nop)', 'drop'),
 				new InputOption('create-db', null, InputOption::VALUE_NONE, 'To create the database if it does not yet exist.'),
 				new InputOption('no-user', null, InputOption::VALUE_NONE, 'To not create/update the admin account.'),
 			));
@@ -45,8 +46,12 @@ class sly_Console_Command_Install extends Base {
 		// load our language file
 		$container->getI18N()->appendFile(SLY_SALLYFOLDER.'/setup/lang');
 
-		// init local configuration
-		$this->initLocalConfig($output, $container);
+		// make sure there is no attempt to build a real cache
+		$container['sly-cache'] = new BabelCache_Blackhole();
+
+		$output->writeln('System Check');
+		$output->writeln('------------');
+		$output->writeln('');
 
 		// check overall system status
 		$healthy = $this->systemCheck($input, $output, $container);
@@ -64,27 +69,14 @@ class sly_Console_Command_Install extends Base {
 		$output->writeln('Installation');
 		$output->writeln('------------');
 		$output->writeln('');
-	}
 
-	protected function initLocalConfig(OutputInterface $output, sly_Container $container) {
-		// Just load defaults and this should be the only time to do so.
-		// Beware that when restarting the setup, the configuration is already present.
-		$config = $container->getConfig();
+		// write project configuration
+		$healthy = $this->writeConfig($input, $output, $container);
+		if (!$healthy) return 1;
 
-		if (!$config->has('DEFAULT_LOCALE')) {
-			$output->writeln('No project configuration found, creating a fresh one based on core defaults.');
-
-			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
-			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
-
-			// create system ID
-			$systemID = sha1(sly_Util_Password::getRandomData(40));
-			$systemID = substr($systemID, 0, 20);
-
-			$config->setLocal('INSTNAME', 'sly'.$systemID);
-			$output->writeln('Unique Installation ID: '.$systemID);
-			$output->writeln('');
-		}
+		// perform database setup
+		$healthy = $this->setupDatabase($input, $output, $container);
+		if (!$healthy) return 1;
 	}
 
 	protected function systemCheck(InputInterface $input, OutputInterface $output, sly_Container $container) {
@@ -94,10 +86,6 @@ class sly_Console_Command_Install extends Base {
 		$params = sly_Util_Setup::checkPdoDrivers($params);
 		$params = sly_Util_Setup::checkDirectories($params);
 		$params = sly_Util_Setup::checkHttpAccess($params);
-
-		$output->writeln('System Check');
-		$output->writeln('------------');
-		$output->writeln('');
 
 		//////////////////////////////////////////////////////////////////////////
 		// explain PHP config
@@ -112,7 +100,7 @@ class sly_Console_Command_Install extends Base {
 			$extensions[] = $this->renderResult($results['ext_'.$ext], $ext);
 		}
 
-		$output->writeln('  PHP');
+		$output->writeln('  <comment>PHP</comment>');
 		$output->writeln('    version         : '.$this->renderResult($results['version']));
 		$output->writeln('    memory limit    : '.$this->renderResult($results['mem_limit']));
 		$output->writeln('    register_globals: '.$this->renderResult($results['register_globals']));
@@ -137,7 +125,7 @@ class sly_Console_Command_Install extends Base {
 		// show directory status
 
 		$output->writeln('');
-		$output->writeln('  Directories');
+		$output->writeln('  <comment>Directories</comment>');
 
 		if (!empty($params['directories'])) {
 			$output->writeln('');
@@ -148,14 +136,14 @@ class sly_Console_Command_Install extends Base {
 			}
 		}
 		else {
-			$output->writeln('    <info>all directories are okay</info>');
+			$output->writeln('    <info>All required directories exist.</info>');
 		}
 
 		//////////////////////////////////////////////////////////////////////////
 		// show HTTP access protection status
 
 		$output->writeln('');
-		$output->writeln('  HTTP access protection');
+		$output->writeln('  <comment>HTTP access protection</comment>');
 
 		if (!empty($params['httpAccess'])) {
 			$output->writeln('');
@@ -169,7 +157,7 @@ class sly_Console_Command_Install extends Base {
 			$output->writeln('    otherwise private data is accessible for anyone on the web.');
 		}
 		else {
-			$output->writeln('    <info>all directories are protected</info>');
+			$output->writeln('    <info>All private directories seem properly protected.</info>');
 		}
 
 		$output->writeln('');
@@ -185,14 +173,15 @@ class sly_Console_Command_Install extends Base {
 		$prefix   = $input->getOption('db-prefix') ?: 'sly_';
 		$driver   = strtolower($input->getOption('db-driver') ?: 'mysql');
 		$config   = array(
-			'NAME'     => $database,
-			'LOGIN'    => $username,
-			'PASSWORD' => $password,
-			'HOST'     => $host,
-			'DRIVER'   => $driver
+			'NAME'         => $database,
+			'LOGIN'        => $username,
+			'PASSWORD'     => $password,
+			'HOST'         => $host,
+			'DRIVER'       => $driver,
+			'TABLE_PREFIX' => $prefix
 		);
 
-		$output->writeln('  Database');
+		$output->writeln('  <comment>Database</comment>');
 
 		//////////////////////////////////////////////////////////////////////////
 		// check connection
@@ -200,8 +189,14 @@ class sly_Console_Command_Install extends Base {
 		$output->write(sprintf('    Connecting via %s://%s@%s/%s...', $driver, $username, $host, $database));
 
 		try {
-			sly_Util_Setup::checkDatabaseConnection($config, false, false, true);
-			$output->writeln(' <info>success</info>');
+			$persistence = sly_Util_Setup::checkDatabaseConnection($config, false, false, true);
+			$output->writeln(' <info>success</info>.');
+
+			// make sure everyone uses this custom persistence from now on
+			$container['sly-persistence'] = $persistence;
+
+			// remember the configuration for later, when we want to write it
+			$this->databaseConfig = $config;
 		}
 		catch (Exception $e) {
 			$output->writeln(' <error>failure!</error>');
@@ -228,16 +223,104 @@ class sly_Console_Command_Install extends Base {
 
 		$output->write('    Checking for root account...');
 
-		$params = sly_Util_Setup::checkUser(array(), $prefix, $db);
-
-		// remember this for later
+		$params           = sly_Util_Setup::checkUser(array(), $prefix, $db);
 		$this->userExists = $params['userExists'];
 
-		if ($this->userExists) {
-			$output->writeln(' <info>success</info>');
+		$output->writeln($this->userExists ? ' <info>success</info>.' : ' <comment>none found</comment>.');
+
+		//////////////////////////////////////////////////////////////////////////
+		// check whether --no-user and username/password arguments match the
+		// current situation
+
+		$dbInitAction = $input->getOption('db-init');
+		$username     = $input->getArgument('username');
+		$password     = $input->getArgument('password');
+
+		if (!in_array($dbInitAction, array('nop', 'drop', 'setup'))) {
+			$output->writeln('    <error>Invalid value for --db-init given.</error>');
+			return false;
 		}
-		else {
-			$output->writeln(' <comment>none found</comment>');
+
+		if (!$this->userExists) {
+			if ($input->getOption('no-user')) {
+				$output->writeln('    <error>No account was found, so you must not use the --no-user option.</error>');
+				return false;
+			}
+
+			if (empty($username) || empty($password)) {
+				$output->writeln('    <error>You must define the username and password for the first account as CLI arguments.</error>');
+				return false;
+			}
+		}
+		elseif ($dbInitAction === 'drop') {
+			if ($input->getOption('no-user')) {
+				$output->writeln('    <error>You must not use the --no-user option in conjunction with --db-init=drop.</error>');
+				return false;
+			}
+
+			if (empty($username) || empty($password)) {
+				$output->writeln('    <error>You must define the username and password for the first account as CLI arguments.</error>');
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	protected function writeConfig(InputInterface $input, OutputInterface $output, sly_Container $container) {
+		$output->write('  Writing project configuration...');
+
+		$timezone    = $input->getOption('timezone') ?: 'UTC';
+		$projectName = $input->getOption('name') ?: 'SallyCMS-Projekt';
+		$config      = $container->getConfig();
+
+		// Just load defaults and this should be the only time to do so.
+		// Beware that when restarting the setup, the configuration is already present.
+
+		if (!$config->has('DEFAULT_LOCALE')) {
+			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
+			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
+
+			// create system ID
+			$systemID = sha1(sly_Util_Password::getRandomData(40));
+			$systemID = substr($systemID, 0, 20);
+
+			$config->setLocal('INSTNAME', 'sly'.$systemID);
+		}
+
+		$config->set('TIMEZONE', $timezone);
+		$config->set('PROJECTNAME', $projectName);
+		$config->setLocal('DATABASE', $this->databaseConfig);
+
+		$output->writeln(' <info>success</info>.');
+
+		return true;
+	}
+
+	protected function setupDatabase(InputInterface $input, OutputInterface $output, sly_Container $container) {
+		$create  = $input->getOption('create-db');
+		$action  = $input->getOption('db-init');
+		$options = $this->availableDbOptions;
+
+		if (!in_array($action, $options, true)) {
+			$output->writeln('  <error>Cannot perform "'.$action.'" action to initialize the database.</error>');
+			$output->writeln('  When in doubt, use "drop" to drop all Sally tables (and lose all existing content).');
+			return false;
+		}
+
+		$config      = $container->getConfig();
+		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
+		$driver      = $config->get('DATABASE/DRIVER');
+		$persistence = $container->getPersistence();
+
+		try {
+			sly_Util_Setup::setupDatabase($action, $prefix, $driver, $persistence, $output);
+		}
+		catch (Exception $e) {
+			$output->writeln(' <error>failure!</error>');
+			$output->writeln(' <error>'.$e->getMessage().'</error>');
+
+			return false;
 		}
 
 		return true;
