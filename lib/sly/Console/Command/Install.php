@@ -15,6 +15,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use sly\Console\Command\Base;
 
 class sly_Console_Command_Install extends Base {
+	protected $availableDbOptions = null;
+	protected $userExists         = null;
+
 	protected function configure() {
 		$this
 			->setName('sly:install')
@@ -42,6 +45,18 @@ class sly_Console_Command_Install extends Base {
 		// load our language file
 		$container->getI18N()->appendFile(SLY_SALLYFOLDER.'/setup/lang');
 
+		// check overall system status
+		$healthy = $this->systemCheck($input, $output, $container);
+		if (!$healthy) return 1;
+
+		// check database connection
+		$healthy = $this->checkDatabase($input, $output, $container);
+		if (!$healthy) return 1;
+
+		// system is healthy, now we can do our actual work
+	}
+
+	protected function systemCheck(InputInterface $input, OutputInterface $output, sly_Container $container) {
 		// check system config and stop with an error page if any serious problems arise
 		$params = array('errors' => false);
 		$params = sly_Util_Setup::checkSystem($params);
@@ -128,9 +143,73 @@ class sly_Console_Command_Install extends Base {
 
 		$output->writeln('');
 
-		if ($params['errors']) {
-			return 1;
+		return !$params['errors'];
+	}
+
+	protected function checkDatabase(InputInterface $input, OutputInterface $output, sly_Container $container) {
+		$database = $input->getArgument('db-name');
+		$username = $input->getArgument('db-user');
+		$password = $input->getArgument('db-pass');
+		$host     = $input->getOption('db-host') ?: 'localhost';
+		$prefix   = $input->getOption('db-prefix') ?: 'sly_';
+		$driver   = strtolower($input->getOption('db-driver') ?: 'mysql');
+		$config   = array(
+			'NAME'     => $database,
+			'LOGIN'    => $username,
+			'PASSWORD' => $password,
+			'HOST'     => $host,
+			'DRIVER'   => $driver
+		);
+
+		$output->writeln('  Database');
+
+		//////////////////////////////////////////////////////////////////////////
+		// check connection
+
+		$output->write(sprintf('    Connecting via %s://%s@%s/%s...', $driver, $username, $host, $database));
+
+		try {
+			sly_Util_Setup::checkDatabaseConnection($config, false, false, true);
+			$output->writeln(' <info>success</info>');
 		}
+		catch (Exception $e) {
+			$output->writeln(' <error>failure!</error>');
+			$output->writeln('    <error>'.$e->getMessage().'</error>');
+
+			return false;
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		// check for required tables
+
+		$output->write('    Checking system tables...');
+
+		$db     = $container->getPersistence();
+		$params = sly_Util_Setup::checkDatabaseTables(array(), $prefix, $db);
+
+		// remember this for later
+		$this->availableDbOptions = $params['actions'];
+
+		$output->writeln(' <info>success</info>, available options are '.implode(', ', $params['actions']).'.');
+
+		//////////////////////////////////////////////////////////////////////////
+		// check for at least one admin account
+
+		$output->write('    Checking for root account...');
+
+		$params = sly_Util_Setup::checkUser(array(), $prefix, $db);
+
+		// remember this for later
+		$this->userExists = $params['userExists'];
+
+		if ($this->userExists) {
+			$output->writeln(' <info>success</info>');
+		}
+		else {
+			$output->writeln(' <comment>none found</comment>');
+		}
+
+		return true;
 	}
 
 	protected function renderResult(array $result, $showRange = true) {

@@ -9,18 +9,16 @@
  */
 
 class sly_Util_Setup {
-	public static function getRequiredTables(sly_Configuration $config) {
-		$prefix = $config->get('DATABASE/TABLE_PREFIX');
-
+	public static function getRequiredTables($tablePrefix) {
 		return array(
-			$prefix.'article',
-			$prefix.'article_slice',
-			$prefix.'clang',
-			$prefix.'file',
-			$prefix.'file_category',
-			$prefix.'user',
-			$prefix.'slice',
-			$prefix.'registry'
+			$tablePrefix.'article',
+			$tablePrefix.'article_slice',
+			$tablePrefix.'clang',
+			$tablePrefix.'file',
+			$tablePrefix.'file_category',
+			$tablePrefix.'user',
+			$tablePrefix.'slice',
+			$tablePrefix.'registry'
 		);
 	}
 
@@ -113,7 +111,7 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function checkDatabaseConnection(array $config, $create, $silent = false) {
+	public static function checkDatabaseConnection(array $config, $create, $silent = false, $throwException = false) {
 		extract($config);
 
 		try {
@@ -153,13 +151,14 @@ class sly_Util_Setup {
 			return true;
 		}
 		catch (Exception $e) {
+			if ($throwException) throw $e;
 			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
 			return false;
 		}
 	}
 
-	public static function checkDatabaseTables(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
-		$requiredTables = self::getRequiredTables($config);
+	public static function checkDatabaseTables(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
+		$requiredTables = self::getRequiredTables($tablePrefix);
 		$availTables    = $db->listTables();
 
 		$actions      = array();
@@ -185,11 +184,10 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function checkUser(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
-		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
+	public static function checkUser(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
 		$availTables = $db->listTables();
 
-		if (in_array($prefix.'user', $availTables)) {
+		if (in_array($tablePrefix.'user', $availTables)) {
 			$viewParams['userExists'] = $db->magicFetch('user', 'id') !== false;
 		}
 		else {
@@ -199,8 +197,8 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function setupDatabase($action, sly_Configuration $config, sly_DB_Persistence $db) {
-		$info = self::checkDatabaseTables(array(), $config, $db);
+	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db) {
+		$info = self::checkDatabaseTables(array(), $tablePrefix, $db);
 
 		if (!in_array($action, $info['actions'], true)) {
 			throw new sly_Exception(t('invalid_database_action', $action));
@@ -208,7 +206,7 @@ class sly_Util_Setup {
 
 		switch ($action) {
 			case 'drop':
-				$requiredTables = self::getRequiredTables($config);
+				$requiredTables = self::getRequiredTables($tablePrefix);
 
 				// 'DROP TABLE IF EXISTS' is MySQL-only...
 				foreach ($db->listTables() as $tblname) {
@@ -221,7 +219,6 @@ class sly_Util_Setup {
 				// break;
 
 			case 'setup':
-				$driver   = $config->get('DATABASE/DRIVER');
 				$dumpFile = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
 
 				if (!file_exists($dumpFile)) {
