@@ -45,6 +45,9 @@ class sly_Console_Command_Install extends Base {
 		// load our language file
 		$container->getI18N()->appendFile(SLY_SALLYFOLDER.'/setup/lang');
 
+		// init local configuration
+		$this->initLocalConfig($output, $container);
+
 		// check overall system status
 		$healthy = $this->systemCheck($input, $output, $container);
 		if (!$healthy) return 1;
@@ -54,6 +57,34 @@ class sly_Console_Command_Install extends Base {
 		if (!$healthy) return 1;
 
 		// system is healthy, now we can do our actual work
+
+		$output->writeln('');
+		$output->writeln('  <info>All systems are ready for take-off.</info>');
+		$output->writeln('');
+		$output->writeln('Installation');
+		$output->writeln('------------');
+		$output->writeln('');
+	}
+
+	protected function initLocalConfig(OutputInterface $output, sly_Container $container) {
+		// Just load defaults and this should be the only time to do so.
+		// Beware that when restarting the setup, the configuration is already present.
+		$config = $container->getConfig();
+
+		if (!$config->has('DEFAULT_LOCALE')) {
+			$output->writeln('No project configuration found, creating a fresh one based on core defaults.');
+
+			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
+			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
+
+			// create system ID
+			$systemID = sha1(sly_Util_Password::getRandomData(40));
+			$systemID = substr($systemID, 0, 20);
+
+			$config->setLocal('INSTNAME', 'sly'.$systemID);
+			$output->writeln('Unique Installation ID: '.$systemID);
+			$output->writeln('');
+		}
 	}
 
 	protected function systemCheck(InputInterface $input, OutputInterface $output, sly_Container $container) {
