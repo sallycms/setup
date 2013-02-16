@@ -103,6 +103,8 @@ class sly_Util_Setup {
 	public static function checkPdoDrivers(array $viewParams) {
 		$drivers = sly_DB_PDO_Driver::getAvailable();
 
+		$viewParams['availPdoDrivers'] = $drivers;
+
 		if (empty($drivers)) {
 			$viewParams['errors']     = true;
 			$viewParams['pdoDrivers'] = true;
@@ -290,7 +292,7 @@ class sly_Util_Setup {
 		);
 	}
 
-	public static function getWidget(array $testResult, $text = null, $showRange = true, $regularFormat, $tooltippedFormat) {
+	public static function getWidget(array $testResult, $text, $showRange, $regularFormat, $tooltippedFormat, $asHTML = true) {
 		if ($text === null) $text = $testResult[2]['text'];
 
 		switch ($testResult[2]['status']) {
@@ -317,8 +319,8 @@ class sly_Util_Setup {
 		}
 
 		$format  = $tooltip ? $tooltippedFormat : $regularFormat;
-		$tooltip = sly_html($tooltip);
-		$text    = sly_html($text);
+		$tooltip = $asHTML ? sly_html($tooltip) : $tooltip;
+		$text    = $asHTML ? sly_html($text) : $text;
 		$format  = str_replace(
 			array('{bclass}', '{iclass}', '{tclass}', '{tooltip}', '{text}'),
 			array($cls,       $icon,      $tCls,      $tooltip,    $text),
