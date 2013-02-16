@@ -120,7 +120,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$password = $request->post('password', 'string', '');
 		$name     = $request->post('database', 'string', '');
 		$prefix   = $request->post('prefix', 'string', 'sly_');
-		$create   = $request->post('create', 'bool') && ($driver !== 'sqlite' && $driver !== 'oci');
+		$create   = $request->post('create', 'bool');
 		$dbConfig = array(
 			'DRIVER'       => $driver,
 			'HOST'         => $host,
@@ -140,7 +140,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$session->set('license', true);
 
 		// check connection and either forward to the next page or show the config form again
-		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create);
+		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create) !== null;
 
 		return $valid ? $this->redirectResponse(array(), 'initdb') : $this->configView();
 	}
