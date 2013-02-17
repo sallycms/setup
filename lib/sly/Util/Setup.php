@@ -144,8 +144,7 @@ class sly_Util_Setup {
 			}
 
 			// prepare version check, retrieve min versions from driver
-			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
-			$driverImpl  = new $driverClass('', '', '', '');
+			$driverImpl  = $db->getConnection()->getDriver();
 			$constraints = $driverImpl->getVersionConstraints();
 
 			// check version
