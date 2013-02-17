@@ -160,6 +160,9 @@ class sly_Util_Setup {
 			if ($create) {
 				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
 				$db->query($createStmt);
+
+				// re-open connection to the now hopefully existing database
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
 			}
 
 			return $db;
@@ -211,8 +214,12 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db, $output = null) {
+	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db, $output = null, $forceAllowDrop = false) {
 		$info = self::checkDatabaseTables(array(), $tablePrefix, $db);
+
+		if ($forceAllowDrop) {
+			$info['actions'][] = 'drop';
+		}
 
 		if (!in_array($action, $info['actions'], true)) {
 			throw new sly_Exception(t('invalid_database_action', $action));
