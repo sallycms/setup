@@ -202,6 +202,7 @@ class sly_Console_Command_Install extends Base {
 		$password = $input->getArgument('db-pass');
 		$host     = $input->getOption('db-host') ?: 'localhost';
 		$prefix   = $input->getOption('db-prefix') ?: 'sly_';
+		$create   = $input->getOption('create-db');
 		$driver   = strtolower($input->getOption('db-driver') ?: 'mysql');
 		$config   = array(
 			'NAME'         => $database,
@@ -220,7 +221,7 @@ class sly_Console_Command_Install extends Base {
 		$output->write(sprintf('    Connecting via %s://%s@%s/%s...', $driver, $username, $host, $database));
 
 		try {
-			$persistence = sly_Util_Setup::checkDatabaseConnection($config, false, false, true);
+			$persistence = sly_Util_Setup::checkDatabaseConnection($config, $create, false, true);
 			$output->writeln(' <info>success</info>.');
 
 			// make sure everyone uses this custom persistence from now on
@@ -243,11 +244,19 @@ class sly_Console_Command_Install extends Base {
 
 		$db     = $container->getPersistence();
 		$params = sly_Util_Setup::checkDatabaseTables(array(), $prefix, $db);
+		$actions = $params['actions'];
+
+		// to make the CL interface more stable, we always offer the 'drop' option,
+		// even if no tables exist
+		$actions[] = 'drop';
+		$actions   = array_unique($actions);
+
+		sort($actions);
 
 		// remember this for later
-		$this->availableDbOptions = $params['actions'];
+		$this->availableDbOptions = $actions;
 
-		$output->writeln(' <info>success</info>, available options are '.implode(', ', $params['actions']).'.');
+		$output->writeln(' <info>success</info>, available options are '.implode(', ', $actions).'.');
 
 		//////////////////////////////////////////////////////////////////////////
 		// check for at least one admin account
@@ -345,7 +354,7 @@ class sly_Console_Command_Install extends Base {
 		$persistence = $container->getPersistence();
 
 		try {
-			sly_Util_Setup::setupDatabase($action, $prefix, $driver, $persistence, $output);
+			sly_Util_Setup::setupDatabase($action, $prefix, $driver, $persistence, $output, true);
 		}
 		catch (Exception $e) {
 			$output->writeln(' <error>failure!</error>');
