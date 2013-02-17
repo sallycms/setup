@@ -9,18 +9,16 @@
  */
 
 class sly_Util_Setup {
-	public static function getRequiredTables(sly_Configuration $config) {
-		$prefix = $config->get('DATABASE/TABLE_PREFIX');
-
+	public static function getRequiredTables($tablePrefix) {
 		return array(
-			$prefix.'article',
-			$prefix.'article_slice',
-			$prefix.'clang',
-			$prefix.'file',
-			$prefix.'file_category',
-			$prefix.'user',
-			$prefix.'slice',
-			$prefix.'registry'
+			$tablePrefix.'article',
+			$tablePrefix.'article_slice',
+			$tablePrefix.'clang',
+			$tablePrefix.'file',
+			$tablePrefix.'file_category',
+			$tablePrefix.'user',
+			$tablePrefix.'slice',
+			$tablePrefix.'registry'
 		);
 	}
 
@@ -103,6 +101,8 @@ class sly_Util_Setup {
 	public static function checkPdoDrivers(array $viewParams) {
 		$drivers = sly_DB_PDO_Driver::getAvailable();
 
+		$viewParams['availPdoDrivers'] = $drivers;
+
 		if (empty($drivers)) {
 			$viewParams['errors']     = true;
 			$viewParams['pdoDrivers'] = true;
@@ -111,7 +111,16 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function checkDatabaseConnection(array $config, $create, $silent = false) {
+	/**
+	 * check database connection
+	 *
+	 * @param  array   $config
+	 * @param  boolean $create
+	 * @param  boolean $silent
+	 * @param  boolean $throwException
+	 * @return sly_DB_PDO_Persistence   the created persistence
+	 */
+	public static function checkDatabaseConnection(array $config, $create, $silent = false, $throwException = false) {
 		extract($config);
 
 		try {
@@ -121,17 +130,21 @@ class sly_Util_Setup {
 				throw new sly_Exception(t('invalid_driver', $DRIVER));
 			}
 
+			// OCI is impossible to create and SQLite doesn't have a CREATE DATABASE command
+			if ($DRIVER === 'sqlite' || $DRIVER === 'oci') {
+				$create = false;
+			}
+
 			// open connection
 			if ($create) {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD);
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, null, $TABLE_PREFIX);
 			}
 			else {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME);
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
 			}
 
 			// prepare version check, retrieve min versions from driver
-			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($DRIVER);
-			$driverImpl  = new $driverClass('', '', '', '');
+			$driverImpl  = $db->getConnection()->getDriver();
 			$constraints = $driverImpl->getVersionConstraints();
 
 			// check version
@@ -146,18 +159,22 @@ class sly_Util_Setup {
 			if ($create) {
 				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
 				$db->query($createStmt);
+
+				// re-open connection to the now hopefully existing database
+				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
 			}
 
-			return true;
+			return $db;
 		}
 		catch (Exception $e) {
+			if ($throwException) throw $e;
 			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
-			return false;
+			return null;
 		}
 	}
 
-	public static function checkDatabaseTables(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
-		$requiredTables = self::getRequiredTables($config);
+	public static function checkDatabaseTables(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
+		$requiredTables = self::getRequiredTables($tablePrefix);
 		$availTables    = $db->listTables();
 
 		$actions      = array();
@@ -183,11 +200,10 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function checkUser(array $viewParams, sly_Configuration $config, sly_DB_Persistence $db) {
-		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
+	public static function checkUser(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
 		$availTables = $db->listTables();
 
-		if (in_array($prefix.'user', $availTables)) {
+		if (in_array($tablePrefix.'user', $availTables)) {
 			$viewParams['userExists'] = $db->magicFetch('user', 'id') !== false;
 		}
 		else {
@@ -197,8 +213,12 @@ class sly_Util_Setup {
 		return $viewParams;
 	}
 
-	public static function setupDatabase($action, sly_Configuration $config, sly_DB_Persistence $db) {
-		$info = self::checkDatabaseTables(array(), $config, $db);
+	public static function setupDatabase($action, $tablePrefix, $driver, sly_DB_Persistence $db, $output = null, $forceAllowDrop = false) {
+		$info = self::checkDatabaseTables(array(), $tablePrefix, $db);
+
+		if ($forceAllowDrop) {
+			$info['actions'][] = 'drop';
+		}
 
 		if (!in_array($action, $info['actions'], true)) {
 			throw new sly_Exception(t('invalid_database_action', $action));
@@ -206,7 +226,11 @@ class sly_Util_Setup {
 
 		switch ($action) {
 			case 'drop':
-				$requiredTables = self::getRequiredTables($config);
+				if ($output) {
+					$output->write('  Dropping database tables...');
+				}
+
+				$requiredTables = self::getRequiredTables($tablePrefix);
 
 				// 'DROP TABLE IF EXISTS' is MySQL-only...
 				foreach ($db->listTables() as $tblname) {
@@ -215,12 +239,19 @@ class sly_Util_Setup {
 					}
 				}
 
+				if ($output) {
+					$output->writeln(' <info>success</info>.');
+				}
+
 				// fallthrough
 				// break;
 
 			case 'setup':
-				$driver   = $config->get('DATABASE/DRIVER');
 				$dumpFile = SLY_COREFOLDER.'/install/'.strtolower($driver).'.sql';
+
+				if ($output) {
+					$output->write('  Creating database tables...');
+				}
 
 				if (!file_exists($dumpFile)) {
 					throw new sly_Exception(t('dump_not_found', $dumpFile));
@@ -228,11 +259,15 @@ class sly_Util_Setup {
 
 				$importer = new sly_DB_Importer();
 				$importer->import($dumpFile);
+
+				if ($output) {
+					$output->writeln(' <info>success</info>.');
+				}
 				break;
 		}
 	}
 
-	public static function createOrUpdateUser($username, $password, sly_Service_User $service) {
+	public static function createOrUpdateUser($username, $password, sly_Service_User $service, $output = null) {
 		$username = trim($username);
 		$password = trim($password);
 
@@ -242,6 +277,10 @@ class sly_Util_Setup {
 
 		if (mb_strlen($password) === 0) {
 			throw new sly_Exception(t('no_admin_password_given'));
+		}
+
+		if ($output) {
+			$output->write('  Creating/updating "'.$username.'" account...');
 		}
 
 		$user = $service->find(array('login' => $username));
@@ -261,6 +300,10 @@ class sly_Util_Setup {
 
 		try {
 			$service->save($user, $user);
+
+			if ($output) {
+				$output->writeln(' <info>success</info>.');
+			}
 		}
 		catch (Exception $e) {
 			throw new sly_Exception(t('cant_create_admin', $e->getMessage()));
@@ -290,7 +333,7 @@ class sly_Util_Setup {
 		);
 	}
 
-	public static function getWidget(array $testResult, $text = null, $showRange = true, $regularFormat, $tooltippedFormat) {
+	public static function getWidget(array $testResult, $text, $showRange, $regularFormat, $tooltippedFormat, $asHTML = true) {
 		if ($text === null) $text = $testResult[2]['text'];
 
 		switch ($testResult[2]['status']) {
@@ -317,8 +360,8 @@ class sly_Util_Setup {
 		}
 
 		$format  = $tooltip ? $tooltippedFormat : $regularFormat;
-		$tooltip = sly_html($tooltip);
-		$text    = sly_html($text);
+		$tooltip = $asHTML ? sly_html($tooltip) : $tooltip;
+		$text    = $asHTML ? sly_html($text) : $text;
 		$format  = str_replace(
 			array('{bclass}', '{iclass}', '{tclass}', '{tooltip}', '{text}'),
 			array($cls,       $icon,      $tCls,      $tooltip,    $text),
