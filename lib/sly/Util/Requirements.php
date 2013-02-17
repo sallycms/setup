@@ -50,7 +50,11 @@ class sly_Util_Requirements {
 	 * @return array
 	 */
 	public function execTime($min, $best) {
-		$maxTime = ini_get('max_execution_time');
+		$maxTime = (int) ini_get('max_execution_time');
+
+		if ($maxTime === 0) {
+			return $this->ok('(unlimited)');
+		}
 
 		if ($maxTime >= $best) {
 			return $this->ok($maxTime.'s');

@@ -41,13 +41,14 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 			if ($requireValidDatabase) {
 				$db     = $container->getPersistence();
-				$params = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
+				$prefix = $config->get('DATABASE/TABLE_PREFIX');
+				$params = sly_Util_Setup::checkDatabaseTables(array(), $prefix, $db);
 
 				if (!in_array('nop', $params['actions'])) {
 					return $this->redirectResponse(array(), 'initdb');
 				}
 
-				$params = sly_Util_Setup::checkUser(array(), $config, $db);
+				$params = sly_Util_Setup::checkUser(array(), $prefix, $db);
 
 				if (!$params['userExists']) {
 					return $this->redirectResponse(array(), 'initdb');
@@ -119,7 +120,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$password = $request->post('password', 'string', '');
 		$name     = $request->post('database', 'string', '');
 		$prefix   = $request->post('prefix', 'string', 'sly_');
-		$create   = $request->post('create', 'bool') && ($driver !== 'sqlite' && $driver !== 'oci');
+		$create   = $request->post('create', 'bool');
 		$dbConfig = array(
 			'DRIVER'       => $driver,
 			'HOST'         => $host,
@@ -139,7 +140,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$session->set('license', true);
 
 		// check connection and either forward to the next page or show the config form again
-		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create);
+		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create) !== null;
 
 		return $valid ? $this->redirectResponse(array(), 'initdb') : $this->configView();
 	}
@@ -164,10 +165,12 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$config    = $container->getConfig();
 		$db        = $container->getPersistence();
 		$action    = $request->post('dbaction', 'string');
+		$prefix    = $config->get('DATABASE/TABLE_PREFIX');
+		$driver    = $config->get('DATABASE/DRIVER');
 
 		// setup the database
 		try {
-			sly_Util_Setup::setupDatabase($action, $config, $db);
+			sly_Util_Setup::setupDatabase($action, $prefix, $driver, $db);
 		}
 		catch (Exception $e) {
 			$this->flash->appendWarning($e->getMessage());
@@ -178,7 +181,8 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$username = $request->post('username', 'string');
 		$password = $request->post('password', 'string');
 		$create   = !$request->post('no_user', 'boolean', false);
-		$info     = sly_Util_Setup::checkUser(array(), $config, $db);
+		$prefix   = $config->get('DATABASE/TABLE_PREFIX');
+		$info     = sly_Util_Setup::checkUser(array(), $prefix, $db);
 
 		try {
 			if (!$create && !$info['userExists']) {
@@ -253,9 +257,10 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$container = $this->getContainer();
 		$config    = $container->getConfig();
 		$db        = $container->getPersistence();
+		$prefix    = $config->get('DATABASE/TABLE_PREFIX');
 		$params    = array('enabled' => array('index'));
-		$params    = sly_Util_Setup::checkDatabaseTables($params, $config, $db);
-		$params    = sly_Util_Setup::checkUser($params, $config, $db);
+		$params    = sly_Util_Setup::checkDatabaseTables($params, $prefix, $db);
+		$params    = sly_Util_Setup::checkUser($params, $prefix, $db);
 
 		$this->render('setup/initdb.phtml', $params, false);
 	}
@@ -275,9 +280,10 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		if (sly_Util_Setup::checkDatabaseConnection($config->get('DATABASE'), false, true)) {
 			$params['enabled'][] = 'initdb';
 
-			$db   = $container->getPersistence();
-			$info = sly_Util_Setup::checkDatabaseTables(array(), $config, $db);
-			$info = sly_Util_Setup::checkUser($info, $config, $db);
+			$db     = $container->getPersistence();
+			$prefix = $config->get('DATABASE/TABLE_PREFIX');
+			$info   = sly_Util_Setup::checkDatabaseTables(array(), $prefix, $db);
+			$info   = sly_Util_Setup::checkUser($info, $prefix, $db);
 
 			if ($info['userExists'] && in_array('nop', $info['actions'])) {
 				$params['enabled'][] = 'profit';
