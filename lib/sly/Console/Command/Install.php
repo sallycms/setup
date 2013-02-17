@@ -218,7 +218,15 @@ class sly_Console_Command_Install extends Base {
 		//////////////////////////////////////////////////////////////////////////
 		// check connection
 
-		$output->write(sprintf('    Connecting via %s://%s@%s/%s...', $driver, $username, $host, $database));
+		try {
+			$driver = sly_DB_PDO_Connection::getDriverInstance($driver, $host, $username, $password, $database);
+		}
+		catch (Exception $e) {
+			$output->writeln('    <error>'.$e->getMessage().'</error>');
+			return false;
+		}
+
+		$output->write(sprintf('    Connecting via %s...', $driver->getDSN()));
 
 		try {
 			$persistence = sly_Util_Setup::checkDatabaseConnection($config, $create, false, true);
