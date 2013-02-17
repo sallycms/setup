@@ -261,7 +261,7 @@ class sly_Util_Setup {
 		}
 	}
 
-	public static function createOrUpdateUser($username, $password, sly_Service_User $service) {
+	public static function createOrUpdateUser($username, $password, sly_Service_User $service, $output = null) {
 		$username = trim($username);
 		$password = trim($password);
 
@@ -271,6 +271,10 @@ class sly_Util_Setup {
 
 		if (mb_strlen($password) === 0) {
 			throw new sly_Exception(t('no_admin_password_given'));
+		}
+
+		if ($output) {
+			$output->write('  Creating/updating "'.$username.'" account...');
 		}
 
 		$user = $service->find(array('login' => $username));
@@ -290,6 +294,10 @@ class sly_Util_Setup {
 
 		try {
 			$service->save($user, $user);
+
+			if ($output) {
+				$output->writeln(' <info>success</info>.');
+			}
 		}
 		catch (Exception $e) {
 			throw new sly_Exception(t('cant_create_admin', $e->getMessage()));
