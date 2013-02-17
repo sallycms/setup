@@ -49,9 +49,11 @@ class sly_Console_Command_Install extends Base {
 		// make sure there is no attempt to build a real cache
 		$container['sly-cache'] = new BabelCache_Blackhole();
 
-		$output->writeln('System Check');
-		$output->writeln('------------');
-		$output->writeln('');
+		$output->writeln(array(
+			'System Check',
+			'------------',
+			''
+		));
 
 		// check overall system status
 		$healthy = $this->systemCheck($input, $output, $container);
@@ -63,12 +65,14 @@ class sly_Console_Command_Install extends Base {
 
 		// system is healthy, now we can do our actual work
 
-		$output->writeln('');
-		$output->writeln('  <info>All systems are ready for take-off.</info>');
-		$output->writeln('');
-		$output->writeln('Installation');
-		$output->writeln('------------');
-		$output->writeln('');
+		$output->writeln(array(
+			'',
+			'  <info>All systems are ready for take-off.</info>',
+			'',
+			'Installation',
+			'------------',
+			''
+		));
 
 		// write project configuration
 		$healthy = $this->writeConfig($input, $output, $container);
@@ -77,6 +81,29 @@ class sly_Console_Command_Install extends Base {
 		// perform database setup
 		$healthy = $this->setupDatabase($input, $output, $container);
 		if (!$healthy) return 1;
+
+		// create/update the admin user
+		$healthy = $this->setupAdminAccount($input, $output, $container);
+		if (!$healthy) return 1;
+
+		// finish up
+		$config = $container->getConfig();
+		$config->setLocal('SETUP', false);
+
+		$output->writeln(array(
+			'',
+			'Success',
+			'-------',
+			'',
+			'  <info>The installation bas been completed successfully!</info>',
+			'',
+			'  You can now log-in into the backend and start managing your',
+			'  project, change settings and create your content.',
+			'',
+			'  <info>Have fun!</info>'
+		));
+
+		return 0;
 	}
 
 	protected function systemCheck(InputInterface $input, OutputInterface $output, sly_Container $container) {
@@ -100,22 +127,26 @@ class sly_Console_Command_Install extends Base {
 			$extensions[] = $this->renderResult($results['ext_'.$ext], $ext);
 		}
 
-		$output->writeln('  <comment>PHP</comment>');
-		$output->writeln('    version         : '.$this->renderResult($results['version']));
-		$output->writeln('    memory limit    : '.$this->renderResult($results['mem_limit']));
-		$output->writeln('    register_globals: '.$this->renderResult($results['register_globals']));
-		$output->writeln('    magic_quotes    : '.$this->renderResult($results['magic_quotes']));
-		$output->writeln('    safe_mode       : '.$this->renderResult($results['safe_mode']));
-		$output->writeln('    open_basedir    : '.$this->renderResult($results['open_basedir']));
-		$output->writeln('    extensions      : '.implode(', ', $extensions));
+		$output->writeln(array(
+			'  <comment>PHP</comment>',
+			'    version         : '.$this->renderResult($results['version']),
+			'    memory limit    : '.$this->renderResult($results['mem_limit']),
+			'    register_globals: '.$this->renderResult($results['register_globals']),
+			'    magic_quotes    : '.$this->renderResult($results['magic_quotes']),
+			'    safe_mode       : '.$this->renderResult($results['safe_mode']),
+			'    open_basedir    : '.$this->renderResult($results['open_basedir']),
+			'    extensions      : '.implode(', ', $extensions)
+		));
 
 		//////////////////////////////////////////////////////////////////////////
 		// show PDO driver status
 
 		if (!empty($params['pdoDrivers'])) {
-			$output->writeln('');
-			$output->writeln('    <error>No PDO drivers found!</error>');
-			$output->writeln('    '.strip_tags(t('pdo_driver_help')));
+			$output->writeln(array(
+				'',
+				'    <error>No PDO drivers found!</error>',
+				'    '.strip_tags(t('pdo_driver_help'))
+			));
 		}
 		else {
 			$output->writeln('    PDO drivers     : <info>'.implode('</info>, <info>', $params['availPdoDrivers']).'</info>');
@@ -321,6 +352,28 @@ class sly_Console_Command_Install extends Base {
 			$output->writeln(' <error>'.$e->getMessage().'</error>');
 
 			return false;
+		}
+
+		return true;
+	}
+
+	protected function setupAdminAccount(InputInterface $input, OutputInterface $output, sly_Container $container) {
+		$noUser = $input->getOption('no-user');
+
+		if (!$noUser) {
+			$username = $input->getArgument('username');
+			$password = $input->getArgument('password');
+
+			try {
+				$service = $container->getUserService();
+				sly_Util_Setup::createOrUpdateUser($username, $password, $service, $output);
+			}
+			catch (Exception $e) {
+				$output->writeln(' <error>failure!</error>');
+				$output->writeln(' <error>'.$e->getMessage().'</error>');
+
+				return false;
+			}
 		}
 
 		return true;
