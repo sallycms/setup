@@ -26,6 +26,9 @@ class sly_App_Setup extends sly_App_Base {
 	public function initialize() {
 		$container = $this->getContainer();
 
+		// init basic error handling
+		$container->getErrorHandler()->init();
+
 		// init request
 		$this->request = $container->getRequest();
 
