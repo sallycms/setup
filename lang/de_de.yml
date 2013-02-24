@@ -16,8 +16,6 @@ timezone: Zeitzone
 configure: Konfigurieren
 setup: Einrichten
 profit: Profit!
-read_license: 'Ich habe die <a href="http://www.mit-lizenz.de/">MIT-Lizenz</a> gelesen und stimme den Bedingungen zu.'
-must_accept_license: 'Sie müssen den Lizenzbedingungen zustimmen, um das Setup fortzusetzen.'
 database_access: Datenbank-Zugang
 please_fix_problems_to_continue: Das Setup kann aufgrund der o.g. Fehler nicht fortgesetzt werden. Bitte überprüfen Sie die Konfiguration des Servers und beheben Sie ausstehende Probleme.
 non_mysql_is_experimental: Alle Datenbanken außer MySQL sind als hoch experimentell anzusehen und dienen zu Testzwecken.
