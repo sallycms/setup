@@ -41,7 +41,7 @@ $timezone    = sly_Form_Helper::getTimezoneSelect('timezone', $timezone);
 		<div class="control-group">
 			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
 			<div class="controls">
-				<input type="text" id="projectname" name="projectname" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" required="required" />
+				<input type="text" id="projectname" name="projectname" autofocus="autofocus" value="<?php print sly_html($projectName) ?>" placeholder="Mein Projekt" required="required" />
 			</div>
 		</div>
 
@@ -55,14 +55,6 @@ $timezone    = sly_Form_Helper::getTimezoneSelect('timezone', $timezone);
 		<div class="control-group">
 			<div class="controls">
 				<?php print implode("\n", $badges); ?>
-			</div>
-		</div>
-
-		<div class="control-group">
-			<div class="controls">
-				<label class="checkbox">
-					<input type="checkbox" name="license" value="1"<?php print $license ? ' checked="checked"' : '' ?> required="required" /> <?php print t('read_license') ?>
-				</label>
 			</div>
 		</div>
 	</fieldset>

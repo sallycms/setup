@@ -101,14 +101,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$config    = $container->getConfig();
 		$session   = $container->getSession();
 
-		// check for accepted license
-		if (!$request->post('license', 'bool', false)) {
-			$this->flash->appendWarning(t('must_accept_license'));
-			$session->set('license', false);
-
-			return $this->configView();
-		}
-
 		// retrieve general config
 		$projectName = $request->post('projectname', 'string', '');
 		$timezone    = $request->post('timezone', 'string', 'UTC');
@@ -135,9 +127,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$config->set('TIMEZONE', $timezone);
 		$config->set('DEFAULT_LOCALE', $session->get('locale', 'string', sly_Core::getDefaultLocale()));
 		$config->setLocal('DATABASE', $dbConfig);
-
-		// remember the accepted license
-		$session->set('license', true);
 
 		// check connection and either forward to the next page or show the config form again
 		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create) !== null;
@@ -230,13 +219,11 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	protected function configView() {
 		$container = $this->getContainer();
 		$config    = $container->getConfig();
-		$session   = $container->getSession();
 		$database  = $config->get('DATABASE');
 		$params    = array(
 			'projectName' => $config->get('PROJECTNAME'),
 			'timezone'    => $config->get('TIMEZONE'),
 			'errors'      => false,
-			'license'     => $session->get('license', 'bool', false),
 			'enabled'     => array('index'),
 			'database'    => array(
 				'driver'   => $database['DRIVER'],
