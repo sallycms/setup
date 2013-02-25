@@ -35,8 +35,8 @@ class sly_Console_Command_Install extends Base {
 				new InputOption('db-driver', null, InputOption::VALUE_REQUIRED, 'The database driver to use', 'mysql'),
 				new InputOption('db-prefix', null, InputOption::VALUE_REQUIRED, 'The database table prefix', 'sly_'),
 				new InputOption('db-init', null, InputOption::VALUE_REQUIRED, 'The database init action to perform (drop, setup or nop)', 'drop'),
-				new InputOption('create-db', null, InputOption::VALUE_NONE, 'To create the database if it does not yet exist.'),
-				new InputOption('no-user', null, InputOption::VALUE_NONE, 'To not create/update the admin account.'),
+				new InputOption('create-db', null, InputOption::VALUE_NONE, 'To create the database if it does not yet exist'),
+				new InputOption('no-user', null, InputOption::VALUE_NONE, 'To not create/update the admin account (only in conjunction with setup or nop installations)'),
 			));
 	}
 
