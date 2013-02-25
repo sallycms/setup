@@ -52,7 +52,7 @@ class sly_Util_Requirements {
 	public function execTime($min, $best) {
 		$maxTime = (int) ini_get('max_execution_time');
 
-		if ($maxTime === 0) {
+		if ($maxTime <= 0) {
 			return $this->ok('(unlimited)');
 		}
 
@@ -75,7 +75,12 @@ class sly_Util_Requirements {
 	 * @return array
 	 */
 	public function memoryLimit($min, $best) {
-		$mem  = sly_ini_get('memory_limit');
+		$mem = sly_ini_get('memory_limit');
+
+		if ($mem <= 0) {
+			return $this->ok('(unlimited)');
+		}
+
 		$mem /= 1024*1024;
 
 		if ($mem >= $best) {

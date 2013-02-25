@@ -16,8 +16,6 @@ timezone: Timezone
 configure: Configure
 setup: Setup
 profit: Profit!
-read_license: 'I have read the <a href="">MIT license</a> and accept its terms.'
-must_accept_license: 'You have to agree to the license agreements in order to continue the setup.'
 database_access: Database Access
 please_fix_problems_to_continue: Setup cannot continue due to the problems above. Please review the server's configuration and fix any outstanding issues in order to proceed.
 non_mysql_is_experimental: All drivers except for MySQL are highly experimental and only for testing purposes.
