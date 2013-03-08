@@ -21,6 +21,8 @@ class sly_Router_Setup extends sly_Router_Base {
 		parent::__construct($routes);
 
 		$this->app = $app;
+
+		$this->addRoute('/:action/?', array());
 	}
 
 	public function getUrl($action = 'index', $params = '', $sep = '&amp;') {
