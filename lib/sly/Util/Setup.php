@@ -18,7 +18,8 @@ class sly_Util_Setup {
 			$tablePrefix.'file_category',
 			$tablePrefix.'user',
 			$tablePrefix.'slice',
-			$tablePrefix.'registry'
+			$tablePrefix.'registry',
+			$tablePrefix.'config'
 		);
 	}
 
@@ -83,7 +84,7 @@ class sly_Util_Setup {
 	public static function checkHttpAccess(array $viewParams) {
 		$errors    = $viewParams['errors'];
 		$dirs      = array();
-		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal');
+		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal', SLY_CONFIGFOLDER);
 
 		foreach ($protected as $dir) {
 			if (!sly_Util_Directory::createHttpProtected($dir)) {
@@ -126,21 +127,21 @@ class sly_Util_Setup {
 		try {
 			$drivers = sly_DB_PDO_Driver::getAvailable();
 
-			if (!in_array($DRIVER, $drivers)) {
-				throw new sly_Exception(t('invalid_driver', $DRIVER));
+			if (!in_array($driver, $drivers)) {
+				throw new sly_Exception(t('invalid_driver', $driver));
 			}
 
 			// OCI is impossible to create and SQLite doesn't have a CREATE DATABASE command
-			if ($DRIVER === 'sqlite' || $DRIVER === 'oci') {
+			if ($driver === 'sqlite' || $driver === 'oci') {
 				$create = false;
 			}
 
 			// open connection
 			if ($create) {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, null, $TABLE_PREFIX);
+				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, null, $table_prefix);
 			}
 			else {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
+				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, $name, $table_prefix);
 			}
 
 			// prepare version check, retrieve min versions from driver
@@ -157,11 +158,11 @@ class sly_Util_Setup {
 			}
 
 			if ($create) {
-				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
+				$createStmt = $driverImpl->getCreateDatabaseSQL($name);
 				$db->query($createStmt);
 
 				// re-open connection to the now hopefully existing database
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
+				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, $name, $table_prefix);
 			}
 
 			return $db;
