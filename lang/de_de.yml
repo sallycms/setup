@@ -69,7 +69,7 @@ generate: erzeugen
 finish_setup: 'Setup abschließen &raquo;'
 congratulations: Glückwunsch!
 setup_finished: |
-  Sie haben das Setup von SallyCMS erfolgreich beendet. Sie können sich nur im
+  Sie haben das Setup von SallyCMS erfolgreich beendet. Sie können sich nun im
   Backend einloggen und beginnen, das Projekt einzurichten, erste Inhalte
   einzupflegen und auch die Konfiguration weiter anzupassen.
 go_to_backend_login: Zum Backend-Login
