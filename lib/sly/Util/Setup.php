@@ -153,10 +153,10 @@ class sly_Util_Setup {
 
 			if ($create) {
 				$createStmt = $driverObj->getCreateDatabaseSQL($name);
-				$db->query($createStmt);
+				$persistence->query($createStmt);
 			}
 
-			return $db;
+			return $persistence;
 		}
 		catch (Exception $e) {
 			if ($throwException) throw $e;
@@ -267,7 +267,9 @@ class sly_Util_Setup {
 					throw new sly_Exception(t('dump_not_found', $dumpFile));
 				}
 
-				$importer = new sly_DB_Importer();
+				$dispatcher = sly_Core::getContainer()->getDispatcher();
+				$importer   = new sly_DB_Importer($db, $dispatcher);
+
 				$importer->import($dumpFile);
 
 				if ($output) {
