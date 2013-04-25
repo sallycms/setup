@@ -56,6 +56,8 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			}
 		}
 
+		sly_Util_Session::start();
+
 		return true;
 	}
 
@@ -91,33 +93,32 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$timezone    = $request->post('timezone', 'string', 'UTC');
 
 		// retrieve database config
-		$driver   = $request->post('driver', 'string', 'mysql');
-		$host     = $request->post('host', 'string', 'localhost');
-		$login    = $request->post('username', 'string', '');
-		$password = $request->post('password', 'string', '');
-		$name     = $request->post('database', 'string', '');
-		$prefix   = $request->post('prefix', 'string', 'sly_');
 		$create   = $request->post('create', 'bool');
 		$dbConfig = array(
-			'driver'       => $driver,
-			'host'         => $host,
-			'login'        => $login,
-			'password'     => $password,
-			'name'         => $name,
-			'table_prefix' => $prefix
+			'driver'       => $request->post('driver', 'string', 'mysql'),
+			'host'         => $request->post('host', 'string', 'localhost'),
+			'login'        => $request->post('username', 'string', ''),
+			'password'     => $request->post('password', 'string', ''),
+			'name'         => $request->post('database', 'string', ''),
+			'table_prefix' => $request->post('prefix', 'string', 'sly_')
 		);
 
-		// update configuration
-		$config->set('projectname', $projectName)
-			->set('timezone', $timezone)
-			->set('default_locale', $session->get('locale', 'string', sly_Core::getDefaultLocale()))
-			->store();
-
-		$localWriter = $container['sly-config-writer'];
-		$localWriter->writeLocal(array('database' => $dbConfig));
+		// remember the project settings in the session, as the database may not
+		// be fully ready yet
+		$session = $container->getSession();
+		$session->set('sly-setup', array(
+			'projectname'    => $projectName,
+			'timezone'       => $timezone,
+			'default_locale' => $session->get('locale', 'string', sly_Core::getDefaultLocale())
+		));
 
 		// check connection and either forward to the next page or show the config form again
 		$valid = sly_Util_Setup::checkDatabaseConnection($dbConfig, $create) !== null;
+
+		if ($valid) {
+			$localWriter = $container['sly-config-writer'];
+			$localWriter->writeLocal(array('database' => $dbConfig));
+		}
 
 		return $valid ? $this->redirectResponse(array(), 'initdb') : $this->configView();
 	}
@@ -154,6 +155,25 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			return $this->initdbView();
 		}
 
+		// allow the configuration to be written
+		$writer = $container->get('sly-config-writer');
+		$writer->setPersistence($db);
+
+		// store the project config
+		$session       = $container->getSession();
+		$projectConfig = $session->get('sly-setup', 'array', array());
+
+		$writer->writeProject(array(
+			'addons'               => array(),
+			'default_article_type' => '',
+			'notfound_article_id'  => 1,
+			'start_article_id'     => 1,
+			'default_clang_id'     => 1,
+			'default_locale'       => isset($projectConfig['default_locale']) ? $projectConfig['default_locale'] : 'de_de',
+			'projectname'          => isset($projectConfig['projectname'])    ? $projectConfig['projectname']    : 'SallyCMS-Projekt',
+			'timezone'             => isset($projectConfig['timezone'])       ? $projectConfig['timezone']       : 'Europe/Berlin',
+		));
+
 		// create/update user
 		$username = $request->post('username', 'string');
 		$password = $request->post('password', 'string');
@@ -187,16 +207,23 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	public function loginAction() {
 		if (($ret = $this->init(true, true)) !== true) return $ret;
 
-		// disable setup
+		// allow the configuration to be written
 		$container = $this->getContainer();
-		$config    = $container->getConfig();
+		$reader    = $container->get('sly-config-reader');
+		$writer    = $container->get('sly-config-writer');
 
+		// load local configuration
+		$localConfig = $reader->readLocal();
+
+		// disable setup
 		$systemID = sha1(sly_Util_Password::getRandomData(40));
 		$systemID = substr($systemID, 0, 20);
 
-		$config->set('instname', 'sly'.$systemID)
-			->set('setup', false)
-			->store();
+		$localConfig['instname'] = 'sly'.$systemID;
+		$localConfig['setup']    = false;
+
+		// and write the config as a whole
+		$writer->writeLocal($localConfig);
 
 		// redirect to backend
 		$request = $container->getRequest();
@@ -210,12 +237,14 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 	}
 
 	protected function configView() {
-		$container = $this->getContainer();
-		$config    = $container->getConfig();
-		$database  = $config->get('database');
-		$params    = array(
-			'projectName' => $config->get('projectname'),
-			'timezone'    => $config->get('timezone'),
+		$container     = $this->getContainer();
+		$config        = $container->getConfig();
+		$session       = $container->getSession();
+		$projectConfig = $session->get('sly-setup', 'array', array());
+		$database      = $config->get('database');
+		$params        = array(
+			'projectName' => isset($projectConfig['projectname']) ? $projectConfig['projectname'] : '',
+			'timezone'    => isset($projectConfig['timezone'])    ? $projectConfig['timezone']    : '',
 			'errors'      => false,
 			'enabled'     => array('index'),
 			'database'    => array(
