@@ -59,7 +59,6 @@ class sly_Util_Setup {
 		$s         = DIRECTORY_SEPARATOR;
 		$dirs      = array();
 		$writables = array(
-			SLY_MEDIAFOLDER,
 			SLY_DEVELOPFOLDER.$s.'templates',
 			SLY_DEVELOPFOLDER.$s.'modules'
 		);
@@ -136,21 +135,16 @@ class sly_Util_Setup {
 				$create = false;
 			}
 
-			// open connection
-			if ($create) {
-				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, null, $table_prefix);
-			}
-			else {
-				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, $name, $table_prefix);
-			}
+			$driverObj   = self::buildDriver($driver, $host, $login, $password, $create ? null : $name);
+			$connection  = self::buildConnection($driverObj, $login, $password);
+			$persistence = new sly_DB_PDO_Persistence($driver, $connection, $table_prefix);
 
 			// prepare version check, retrieve min versions from driver
-			$driverImpl  = $db->getConnection()->getDriver();
-			$constraints = $driverImpl->getVersionConstraints();
+			$constraints = $driverObj->getVersionConstraints();
 
 			// check version
 			$helper = new sly_Util_Requirements();
-			$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
+			$result = $helper->pdoDriverVersion($connection, $constraints);
 
 			// stop further code
 			if ($result['status'] === sly_Util_Requirements::FAILED) {
@@ -158,11 +152,8 @@ class sly_Util_Setup {
 			}
 
 			if ($create) {
-				$createStmt = $driverImpl->getCreateDatabaseSQL($name);
+				$createStmt = $driverObj->getCreateDatabaseSQL($name);
 				$db->query($createStmt);
-
-				// re-open connection to the now hopefully existing database
-				$db = new sly_DB_PDO_Persistence($driver, $host, $login, $password, $name, $table_prefix);
 			}
 
 			return $db;
@@ -172,6 +163,24 @@ class sly_Util_Setup {
 			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
 			return null;
 		}
+	}
+
+	private static function buildDriver($driverName, $host, $login, $password, $name) {
+		$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($driverName);
+
+		return new $driverClass($host, $login, $password, $name);
+	}
+
+	public static function buildConnection(sly_DB_PDO_Driver $driver, $login, $password) {
+		$pdo = new PDO($driver->getDSN(), $login, $password, $driver->getPDOOptions());
+
+		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+		foreach ($driver->getPDOAttributes() as $key => $value) {
+			$pdo->setAttribute($key, $value);
+		}
+
+		return new sly_DB_PDO_Connection($driver, $pdo);
 	}
 
 	public static function checkDatabaseTables(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
@@ -370,5 +379,27 @@ class sly_Util_Setup {
 		);
 
 		return $format;
+	}
+
+	/**
+	 * Create a single select box with all timezones
+	 *
+	 * @param  string $name              element's name
+	 * @param  string $selected          the currently selected element or null for the system timezone
+	 * @return sly_Form_Select_DropDown
+	 */
+	public static function getTimezoneSelect($name = 'timezone', $selected = null) {
+		$selected = $selected === null ? sly_Core::getTimezone() : $selected;
+		$list     = DateTimeZone::listIdentifiers();
+		$list     = array_combine($list, $list);
+
+		// transform all timezones from 'Continent/City' to 'Continent / City'
+		// to make it easier to filter them via Chosen
+
+		foreach ($list as $idx => $tz) {
+			$list[$idx] = str_replace('/', ' / ', $tz);
+		}
+
+		return new sly_Form_Select_DropDown($name, t('timezone'), $selected, $list);
 	}
 }

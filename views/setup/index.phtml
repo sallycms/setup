@@ -26,7 +26,7 @@ foreach ($all as $driver => $title) {
 }
 
 $multiDriver = count($available) > 1;
-$timezone    = sly_Form_Helper::getTimezoneSelect('timezone', $timezone);
+$timezone    = sly_Util_Setup::getTimezoneSelect('timezone', $timezone);
 
 ?>
 <form class="form-horizontal" action="<?php print $_router->getUrl('saveconfig') ?>" method="post">
