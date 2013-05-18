@@ -9,17 +9,14 @@
  */
 
 class sly_Dispatcher_Setup extends sly_Dispatcher {
-	protected $container;
-	protected $prefix;
-
 	/**
 	 * Constructor
 	 *
 	 * @param sly_Container $container
+	 * @param string        $containerClassPrefix
 	 */
 	public function __construct(sly_Container $container, $containerClassPrefix) {
-		$this->container = $container;
-		$this->prefix    = $containerClassPrefix;
+		parent::__construct($container, $containerClassPrefix, true);
 	}
 
 	/**
