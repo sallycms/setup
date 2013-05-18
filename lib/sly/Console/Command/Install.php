@@ -219,7 +219,12 @@ class sly_Console_Command_Install extends Base {
 		// check connection
 
 		try {
-			$driver = sly_DB_PDO_Connection::getDriverInstance($driver, $host, $username, $password, $database);
+			if (!class_exists('sly_DB_PDO_Driver_'.strtoupper($driver))) {
+				throw new sly_DB_PDO_Exception('Unknown Database Driver: '.$driver);
+			}
+
+			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($driver);
+			$driver      = new $driverClass($host, $username, $password, $database);
 		}
 		catch (Exception $e) {
 			$output->writeln('    <error>'.$e->getMessage().'</error>');
