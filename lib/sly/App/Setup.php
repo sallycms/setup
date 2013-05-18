@@ -43,10 +43,6 @@ class sly_App_Setup extends sly_App_Base {
 
 		// make sure our layout is used later on
 		$this->initLayout($container);
-
-		// make sure to init the asset cache at least once, so the directories
-		// gets created
-		$container->getAssetService();
 	}
 
 	/**
