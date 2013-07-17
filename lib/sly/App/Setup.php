@@ -9,8 +9,9 @@
  */
 
 class sly_App_Setup extends sly_App_Base {
-	protected $request = null;
-	protected $router  = null;
+	protected $request    = null;
+	protected $router     = null;
+	protected $dispatcher = null;
 
 	public function isBackend() {
 		return true;
@@ -62,10 +63,6 @@ class sly_App_Setup extends sly_App_Base {
 		$response->send();
 	}
 
-	public function getControllerClassPrefix() {
-		return 'sly_Controller_Setup';
-	}
-
 	public function getCurrentControllerName() {
 		return $this->controller;
 	}
@@ -101,7 +98,7 @@ class sly_App_Setup extends sly_App_Base {
 	 */
 	protected function getDispatcher() {
 		if ($this->dispatcher === null) {
-			$this->dispatcher = new sly_Dispatcher_Setup($this->getContainer(), $this->getControllerClassPrefix());
+			$this->dispatcher = new sly_Dispatcher_Setup($this->getContainer());
 		}
 
 		return $this->dispatcher;
