@@ -18,7 +18,8 @@ class sly_Util_Setup {
 			$tablePrefix.'file_category',
 			$tablePrefix.'user',
 			$tablePrefix.'slice',
-			$tablePrefix.'registry'
+			$tablePrefix.'registry',
+			$tablePrefix.'config'
 		);
 	}
 
@@ -58,7 +59,6 @@ class sly_Util_Setup {
 		$s         = DIRECTORY_SEPARATOR;
 		$dirs      = array();
 		$writables = array(
-			SLY_MEDIAFOLDER,
 			SLY_DEVELOPFOLDER.$s.'templates',
 			SLY_DEVELOPFOLDER.$s.'modules'
 		);
@@ -83,7 +83,7 @@ class sly_Util_Setup {
 	public static function checkHttpAccess(array $viewParams) {
 		$errors    = $viewParams['errors'];
 		$dirs      = array();
-		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal');
+		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal', SLY_CONFIGFOLDER);
 
 		foreach ($protected as $dir) {
 			if (!sly_Util_Directory::createHttpProtected($dir)) {
@@ -126,30 +126,25 @@ class sly_Util_Setup {
 		try {
 			$drivers = sly_DB_PDO_Driver::getAvailable();
 
-			if (!in_array($DRIVER, $drivers)) {
-				throw new sly_Exception(t('invalid_driver', $DRIVER));
+			if (!in_array($driver, $drivers)) {
+				throw new sly_Exception(t('invalid_driver', $driver));
 			}
 
 			// OCI is impossible to create and SQLite doesn't have a CREATE DATABASE command
-			if ($DRIVER === 'sqlite' || $DRIVER === 'oci') {
+			if ($driver === 'sqlite' || $driver === 'oci') {
 				$create = false;
 			}
 
-			// open connection
-			if ($create) {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, null, $TABLE_PREFIX);
-			}
-			else {
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
-			}
+			$driverObj   = self::buildDriver($driver, $host, $login, $password, $create ? null : $name);
+			$connection  = self::buildConnection($driverObj, $login, $password);
+			$persistence = new sly_DB_PDO_Persistence($driver, $connection, $table_prefix);
 
 			// prepare version check, retrieve min versions from driver
-			$driverImpl  = $db->getConnection()->getDriver();
-			$constraints = $driverImpl->getVersionConstraints();
+			$constraints = $driverObj->getVersionConstraints();
 
 			// check version
 			$helper = new sly_Util_Requirements();
-			$result = $helper->pdoDriverVersion($db->getConnection(), $constraints);
+			$result = $helper->pdoDriverVersion($connection, $constraints);
 
 			// stop further code
 			if ($result['status'] === sly_Util_Requirements::FAILED) {
@@ -157,20 +152,35 @@ class sly_Util_Setup {
 			}
 
 			if ($create) {
-				$createStmt = $driverImpl->getCreateDatabaseSQL($NAME);
-				$db->query($createStmt);
-
-				// re-open connection to the now hopefully existing database
-				$db = new sly_DB_PDO_Persistence($DRIVER, $HOST, $LOGIN, $PASSWORD, $NAME, $TABLE_PREFIX);
+				$createStmt = $driverObj->getCreateDatabaseSQL($name);
+				$persistence->query($createStmt);
 			}
 
-			return $db;
+			return $persistence;
 		}
 		catch (Exception $e) {
 			if ($throwException) throw $e;
 			if (!$silent) sly_Core::getFlashMessage()->appendWarning($e->getMessage());
 			return null;
 		}
+	}
+
+	private static function buildDriver($driverName, $host, $login, $password, $name) {
+		$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($driverName);
+
+		return new $driverClass($host, $login, $password, $name);
+	}
+
+	public static function buildConnection(sly_DB_PDO_Driver $driver, $login, $password) {
+		$pdo = new PDO($driver->getDSN(), $login, $password, $driver->getPDOOptions());
+
+		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+		foreach ($driver->getPDOAttributes() as $key => $value) {
+			$pdo->setAttribute($key, $value);
+		}
+
+		return new sly_DB_PDO_Connection($driver, $pdo);
 	}
 
 	public static function checkDatabaseTables(array $viewParams, $tablePrefix, sly_DB_Persistence $db) {
@@ -257,7 +267,9 @@ class sly_Util_Setup {
 					throw new sly_Exception(t('dump_not_found', $dumpFile));
 				}
 
-				$importer = new sly_DB_Importer();
+				$dispatcher = sly_Core::getContainer()->getDispatcher();
+				$importer   = new sly_DB_Importer($db, $dispatcher);
+
 				$importer->import($dumpFile);
 
 				if ($output) {
@@ -369,5 +381,27 @@ class sly_Util_Setup {
 		);
 
 		return $format;
+	}
+
+	/**
+	 * Create a single select box with all timezones
+	 *
+	 * @param  string $name              element's name
+	 * @param  string $selected          the currently selected element or null for the system timezone
+	 * @return sly_Form_Select_DropDown
+	 */
+	public static function getTimezoneSelect($name = 'timezone', $selected = null) {
+		$selected = $selected === null ? sly_Core::getTimezone() : $selected;
+		$list     = DateTimeZone::listIdentifiers();
+		$list     = array_combine($list, $list);
+
+		// transform all timezones from 'Continent/City' to 'Continent / City'
+		// to make it easier to filter them via Chosen
+
+		foreach ($list as $idx => $tz) {
+			$list[$idx] = str_replace('/', ' / ', $tz);
+		}
+
+		return new sly_Form_Select_DropDown($name, t('timezone'), $selected, $list);
 	}
 }

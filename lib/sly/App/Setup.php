@@ -9,8 +9,9 @@
  */
 
 class sly_App_Setup extends sly_App_Base {
-	protected $request = null;
-	protected $router  = null;
+	protected $request    = null;
+	protected $router     = null;
+	protected $dispatcher = null;
 
 	public function isBackend() {
 		return true;
@@ -43,10 +44,6 @@ class sly_App_Setup extends sly_App_Base {
 
 		// make sure our layout is used later on
 		$this->initLayout($container);
-
-		// make sure to init the asset cache at least once, so the directories
-		// gets created
-		$container->getAssetService();
 	}
 
 	/**
@@ -64,10 +61,6 @@ class sly_App_Setup extends sly_App_Base {
 
 		// send the response :)
 		$response->send();
-	}
-
-	public function getControllerClassPrefix() {
-		return 'sly_Controller_Setup';
 	}
 
 	public function getCurrentControllerName() {
@@ -105,7 +98,7 @@ class sly_App_Setup extends sly_App_Base {
 	 */
 	protected function getDispatcher() {
 		if ($this->dispatcher === null) {
-			$this->dispatcher = new sly_Dispatcher_Setup($this->getContainer(), $this->getControllerClassPrefix());
+			$this->dispatcher = new sly_Dispatcher_Setup($this->getContainer());
 		}
 
 		return $this->dispatcher;

@@ -8,26 +8,26 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
+use sly\Assets\Util;
+
 /**
  * @ingroup layout
  */
 class sly_Layout_Setup extends sly_Layout_XHTML5 {
 	public function __construct(sly_I18N $i18n, sly_Request $request) {
-		$locale = $i18n->getLocale();
-		$base   = $request->getBaseUrl(true).'/';
+		$this->addCSSFile(Util::appUri('css/setup.less'));
 
-		$this->addCSSFile('assets/css/setup.less');
-
-		$this->addJavaScriptFile('assets/js/jquery.min.js');
-		$this->addJavaScriptFile('assets/js/jquery.chosen.min.js');
-		$this->addJavaScriptFile('assets/js/bootstrap.min.js');
-		$this->addJavaScriptFile('assets/js/setup.js');
+		$this->addJavaScriptFile(Util::appUri('js/jquery.min.js'));
+		$this->addJavaScriptFile(Util::appUri('js/jquery.chosen.min.js'));
+		$this->addJavaScriptFile(Util::appUri('js/bootstrap.min.js'));
+		$this->addJavaScriptFile(Util::appUri('js/setup.js'));
 
 		$this->setTitle('SallyCMS Setup');
 
 		$this->addMeta('robots', 'noindex,nofollow');
 		$this->setBase($request->getAppBaseUrl().'/');
 
+		$locale = $i18n->getLocale();
 		$locale = explode('_', $locale, 2);
 		$locale = reset($locale);
 

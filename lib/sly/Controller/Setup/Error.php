@@ -21,7 +21,7 @@ class sly_Controller_Setup_Error extends sly_Controller_Setup_Base implements sl
 		$response = $this->container->getResponse();
 
 		if ($this->exception instanceof sly_Controller_Exception) {
-			if ($e->getCode() === 404) $response->setStatusCode(404);
+			if ($this->exception->getCode() === 404) $response->setStatusCode(404);
 			$title = t('controller_error');
 		}
 		else {
@@ -32,7 +32,7 @@ class sly_Controller_Setup_Error extends sly_Controller_Setup_Base implements sl
 		if (sly_Core::isDeveloperMode()) {
 			$trace = $this->exception->getTraceAsString();
 		}
-		
+
 		$content = $this->render('error/index.phtml', compact('title', 'trace', 'message'));
 		$response->setContent($content);
 		return $response;
