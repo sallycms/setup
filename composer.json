@@ -1,0 +1,38 @@
+{
+    "name": "sallycms/setup",
+    "description": "The default setup application for SallyCMS projects",
+    "keywords": [
+        "cms",
+        "backend",
+        "ui",
+        "administration",
+        "sallycms",
+        "setup",
+        "install"
+    ],
+    "authors": [
+        {
+            "name": "webvariants GbR",
+            "homepage": "http://www.webvariants.de/"
+        }
+    ],
+    "version": "0.8.2",
+    "homepage": "http://www.sallycms.de/",
+    "license": "MIT",
+    "type": "sallycms-app",
+    "autoload": {
+        "psr-0": {
+            "sly_": "lib/"
+        }
+    },
+    "require": {
+        "php": ">=5.2.1",
+        "sallycms/core": "0.8.*",
+        "sallycms/composer-installer": "~1.1"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-default": "0.9.x-dev"
+        }
+    }
+}
