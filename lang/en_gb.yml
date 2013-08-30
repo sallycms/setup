@@ -1,0 +1,97 @@
+lang: English
+compatible_but_old: 'Recommendation: {0}'
+requires_at_least: 'Minimal Requirement: {0}'
+exec_time: '{0}s, variable'
+memory: '{0}MB, variable'
+enabled: enabled
+disabled: disabled
+welcome: Welcome
+intro: |
+  This assistent guides you through the necessary steps to install a SallyCMS
+  project. Please fill in all required information to proceed to the next step
+  and create your database and first user accounts.
+general_config: General Config
+projectname: Project name
+timezone: Timezone
+configure: Configure
+setup: Setup
+profit: Profit!
+database_access: Database Access
+please_fix_problems_to_continue: Setup cannot continue due to the problems above. Please review the server's configuration and fix any outstanding issues in order to proceed.
+non_mysql_is_experimental: All drivers except for MySQL are highly experimental and only for testing purposes.
+host_and_driver: 'Host &amp; Database Type'
+username_and_password: 'Username &amp; Password'
+database: Database
+create: create
+table_prefix: Table Prefix
+table_prefix_help: 'does not need to be changed in most cases; allows for multiple projects in one database'
+next_step: 'Proceed to Next Step &raquo;'
+system_configuration: System Configuration
+php_version: PHP Version
+limits: Limits
+php_settings: Settings
+php_extensions: Extensions
+system_directories: System Directories
+system_directories_help: 'The following directories must exist in order for SallyCMS to work properly, but could not be created automatically:'
+system_directories_todo: 'Please create these directories manually.'
+http_access_protection: HTTP Access Protection
+http_access_protection_help: |
+  Zur Sicherheit gegen unautorisierten Zugriff müssen einige Verzeichnisse mit
+  <code>.htaccess</code>-Dateien geschützt werden. Die folgenden Verzeichnisse
+  konnten nicht automatisch geschützt werden:
+http_access_protection_help: |
+  To protect against unauthorized access, some directories have to be protected
+  with a <code>.htaccess</code> file. This file could not be created in the
+  following directories:
+http_access_protection_todo: 'Please create the required file manually or adjust the directory permissions.'
+pdo_driver: Database Drivers
+pdo_driver_help: 'SallyCMS requires PDO as well as at least the <code>pdo_mysql</code> driver, in order to communicate with the database. The extension could not be found, however.'
+host: Host
+init_database: Setup Database
+init_database_help: |
+  In order to use SallyCMS, some database tables need to be created. You can choose
+  between the following options, how to setup your database.
+db_action_setup: |
+  <i class="icon-wrench"></i> <strong>Prepare Empty Database</strong><br />
+  This will create new database tables inside an empty, existing database.
+db_action_drop: |
+  <i class="icon-trash"></i> <strong>Overwrite Existing Database</strong><br />
+  This will create new database tables inside an existing database.
+  All required tables are removed (dropped) before the new tables are created.
+db_action_nop: |
+  <i class="icon-forward"></i> <strong>No Changes</strong><br />
+  This will perform no action on the configured database. All required tables must
+  already be present.
+create_admin: Create Admin Account
+create_admin_help: |
+  You have to create a first user account in order to log into the backend after
+  finishing the setup. Please enter your desired username and a strong password.
+  If the chosen username already exists, the user's password will be overwritten
+  with your new password.
+dont_create_user: create no account
+generate: generate
+finish_setup: 'Finish Setup &raquo;'
+finish_setup: 'Setup abschließen &raquo;'
+congratulations: Congratulations!
+setup_finished: |
+  You have successfully completed the SallyCMS setup. You can now log-in into
+  the backend and begin to configure the project, add your content and adjust
+  the system settings.
+go_to_backend_login: Go to Backend Login
+closing_notes: |
+  For security reasons, the setup will be disabled once you click on the button
+  above. You can re-enable it at any time on the backend's system page.
+invalid_driver: 'The chosen PDO driver ({0}) is not available!'
+invalid_database_action: 'The chosen function "{0}" is not available!'
+dump_not_found: 'The installation dump {0} could not be found!'
+no_admin_username_given: No username for the account given.
+no_admin_password_given: No (new) password for the account given.
+cant_create_admin: 'Could not create user account: {0}'
+redirect_to: 'You are being <a href="{0}">redirected</a>.'
+must_create_first_user: 'You must create a first user account!'
+controller_error: Controller Exception
+unexpected_exception: Unexpected Exception
+unknown_action: 'Method {0} in {1} not found!'
+database_server_too_old: "The target database server is too old and incompatible with Sally.<br />You need at least version {1}, but {0} has been detected."
+database_server_old_but_okay: "The target database server is out of date but still compatible.<br />Version {1}+ is recommended, but {0} has been detected."
+database_server_is_up_to_date: "The target database server is up-to-date (version {0})."

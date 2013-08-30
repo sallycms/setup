@@ -1,0 +1,19 @@
+<?php
+/*
+ * Copyright (c) 2013, webvariants GbR, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'active' => 'profit'));
+
+?>
+<fieldset>
+	<legend><?php print t('congratulations') ?></legend>
+	<p><?php print t('setup_finished') ?></p>
+	<p class="login-button"><a href="<?php print $_router->getUrl('login') ?>" class="btn btn-large btn-success"><?php print t('go_to_backend_login') ?></a></p>
+	<p class="muted closing-notes"><small><?php print t('closing_notes') ?></small></p>
+</fieldset>
