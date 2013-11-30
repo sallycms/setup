@@ -14,6 +14,6 @@ print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'act
 <fieldset>
 	<legend><?php print t('congratulations') ?></legend>
 	<p><?php print t('setup_finished') ?></p>
-	<p class="login-button"><a href="<?php print $_router->getUrl('login') ?>" class="btn btn-large btn-success"><?php print t('go_to_backend_login') ?></a></p>
+	<p class="login-button"><a href="<?php print $_router->getUrl('login') ?>" class="btn btn-large btn-success" tabindex="1"><?php print t('go_to_backend_login') ?></a></p>
 	<p class="muted closing-notes"><small><?php print t('closing_notes') ?></small></p>
 </fieldset>
