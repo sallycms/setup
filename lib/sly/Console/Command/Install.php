@@ -88,7 +88,7 @@ class sly_Console_Command_Install extends Base {
 
 		// finish up
 		$config = $container->getConfig();
-		$config->setLocal('SETUP', false);
+		$config->set('setup', false)->store();
 
 		$output->writeln(array(
 			'',
@@ -205,12 +205,12 @@ class sly_Console_Command_Install extends Base {
 		$create   = $input->getOption('create-db');
 		$driver   = strtolower($input->getOption('db-driver') ?: 'mysql');
 		$config   = array(
-			'NAME'         => $database,
-			'LOGIN'        => $username,
-			'PASSWORD'     => $password,
-			'HOST'         => $host,
-			'DRIVER'       => $driver,
-			'TABLE_PREFIX' => $prefix
+			'name'         => $database,
+			'login'        => $username,
+			'password'     => $password,
+			'host'         => $host,
+			'driver'       => $driver,
+			'table_prefix' => $prefix
 		);
 
 		$output->writeln('  <comment>Database</comment>');
@@ -219,7 +219,12 @@ class sly_Console_Command_Install extends Base {
 		// check connection
 
 		try {
-			$driver = sly_DB_PDO_Connection::getDriverInstance($driver, $host, $username, $password, $database);
+			if (!class_exists('sly_DB_PDO_Driver_'.strtoupper($driver))) {
+				throw new sly_DB_PDO_Exception('Unknown Database Driver: '.$driver);
+			}
+
+			$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($driver);
+			$driver      = new $driverClass($host, $username, $password, $database);
 		}
 		catch (Exception $e) {
 			$output->writeln('    <error>'.$e->getMessage().'</error>');
@@ -322,23 +327,20 @@ class sly_Console_Command_Install extends Base {
 		$projectName = $input->getOption('name') ?: 'SallyCMS-Projekt';
 		$config      = $container->getConfig();
 
-		// Just load defaults and this should be the only time to do so.
-		// Beware that when restarting the setup, the configuration is already present.
+		$localWriter = $container['sly-config-writer'];
+		$localWriter->writeLocal(array('database' => $this->databaseConfig));
 
-		if (!$config->has('DEFAULT_LOCALE')) {
-			$config->loadProjectDefaults(SLY_COREFOLDER.'/config/sallyProjectDefaults.yml');
-			$config->loadLocalDefaults(SLY_COREFOLDER.'/config/sallyLocalDefaults.yml');
+		$config->setStatic('database', $this->databaseConfig);
 
-			// create system ID
-			$systemID = sha1(sly_Util_Password::getRandomData(40));
-			$systemID = substr($systemID, 0, 20);
+		// create system ID
+		$systemID = sha1(sly_Util_Password::getRandomData(40));
+		$systemID = substr($systemID, 0, 20);
 
-			$config->setLocal('INSTNAME', 'sly'.$systemID);
-		}
+		$config->set('instname', 'sly'.$systemID)
+			->set('timezone', $timezone)
+			->set('projectname', $projectName)
+			->store();
 
-		$config->set('TIMEZONE', $timezone);
-		$config->set('PROJECTNAME', $projectName);
-		$config->setLocal('DATABASE', $this->databaseConfig);
 
 		$output->writeln(' <info>success</info>.');
 
@@ -357,8 +359,8 @@ class sly_Console_Command_Install extends Base {
 		}
 
 		$config      = $container->getConfig();
-		$prefix      = $config->get('DATABASE/TABLE_PREFIX');
-		$driver      = $config->get('DATABASE/DRIVER');
+		$prefix      = $config->get('database/table_prefix');
+		$driver      = $config->get('database/driver');
 		$persistence = $container->getPersistence();
 
 		try {
