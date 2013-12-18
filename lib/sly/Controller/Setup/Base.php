@@ -9,11 +9,6 @@
  */
 
 abstract class sly_Controller_Setup_Base extends sly_Controller_Base {
-	public function __construct() {
-		$this->setContentType('text/html');
-		$this->setCharset('UTF-8');
-	}
-
 	protected function getViewFolder() {
 		return SLY_SALLYFOLDER.'/setup/views/';
 	}
