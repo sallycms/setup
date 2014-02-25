@@ -135,8 +135,8 @@ class sly_Util_Setup {
 				$create = false;
 			}
 
-			$driverObj   = self::buildDriver($driver, $host, $login, $password, $create ? null : $name);
-			$connection  = self::buildConnection($driverObj, $login, $password);
+			$driverObj   = self::buildDriver($driver, $host, $user, $password, $create ? null : $dbname);
+			$connection  = self::buildConnection($driverObj, $user, $password);
 			$persistence = new sly_DB_PDO_Persistence($driver, $connection, $table_prefix);
 
 			// prepare version check, retrieve min versions from driver
@@ -165,14 +165,14 @@ class sly_Util_Setup {
 		}
 	}
 
-	private static function buildDriver($driverName, $host, $login, $password, $name) {
+	private static function buildDriver($driverName, $host, $user, $password, $name) {
 		$driverClass = 'sly_DB_PDO_Driver_'.strtoupper($driverName);
 
-		return new $driverClass($host, $login, $password, $name);
+		return new $driverClass($host, $user, $password, $name);
 	}
 
-	public static function buildConnection(sly_DB_PDO_Driver $driver, $login, $password) {
-		$pdo = new PDO($driver->getDSN(), $login, $password, $driver->getPDOOptions());
+	public static function buildConnection(sly_DB_PDO_Driver $driver, $user, $password) {
+		$pdo = new PDO($driver->getDSN(), $user, $password, $driver->getPDOOptions());
 
 		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
