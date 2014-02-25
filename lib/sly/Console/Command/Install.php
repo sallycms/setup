@@ -205,8 +205,8 @@ class sly_Console_Command_Install extends Base {
 		$create   = $input->getOption('create-db');
 		$driver   = strtolower($input->getOption('db-driver') ?: 'mysql');
 		$config   = array(
-			'name'         => $database,
-			'login'        => $username,
+			'dbname'       => $database,
+			'user'         => $username,
 			'password'     => $password,
 			'host'         => $host,
 			'driver'       => $driver,
