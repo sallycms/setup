@@ -152,7 +152,7 @@ class sly_Util_Setup {
 			}
 
 			if ($create) {
-				$createStmt = $driverObj->getCreateDatabaseSQL($name);
+				$createStmt = $driverObj->getCreateDatabaseSQL($dbname);
 				$persistence->query($createStmt);
 			}
 
