@@ -30,7 +30,7 @@ class sly_Util_Setup {
 		$enabled  = t('enabled');
 		$disabled = t('disabled');
 
-		$results['version']          = array('5.2.3', '5.4.0', $tester->phpVersion('5.2.3', '5.4.0'));
+		$results['version']          = array('5.3.3', '5.4.0', $tester->phpVersion('5.3.3', '5.4.0'));
 		$results['time_limit']       = array('20s', '60s', $tester->execTime(20, 60));
 		$results['mem_limit']        = array('16MB', '64MB', $tester->memoryLimit(16, 64));
 		$results['register_globals'] = array($disabled, $disabled, $tester->registerGlobals());
