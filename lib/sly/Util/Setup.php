@@ -83,7 +83,7 @@ class sly_Util_Setup {
 	public static function checkHttpAccess(array $viewParams) {
 		$errors    = $viewParams['errors'];
 		$dirs      = array();
-		$protected = array(SLY_DEVELOPFOLDER, SLY_DYNFOLDER.DIRECTORY_SEPARATOR.'internal', SLY_CONFIGFOLDER);
+		$protected = array(SLY_DEVELOPFOLDER, SLY_DATAFOLDER);
 
 		foreach ($protected as $dir) {
 			if (!sly_Util_Directory::createHttpProtected($dir)) {
