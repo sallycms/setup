@@ -70,6 +70,17 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			return $ret;
 		}
 
+		// set some sensible initial values
+
+		$container = $this->getContainer();
+		$session   = $container->getSession();
+		$curConfig = $session->get('sly-setup', 'array', array());
+
+		if (empty($curConfig['timezone'])) {
+			$curConfig['timezone'] = @date_default_timezone_get(); // has been set by the app already
+			$session->set('sly-setup', $curConfig);
+		}
+
 		$this->configView();
 	}
 
