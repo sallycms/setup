@@ -60,7 +60,8 @@ class sly_Util_Setup {
 		$dirs      = array();
 		$writables = array(
 			SLY_DEVELOPFOLDER.$s.'templates',
-			SLY_DEVELOPFOLDER.$s.'modules'
+			SLY_DEVELOPFOLDER.$s.'modules',
+			SLY_CONFIGFOLDER
 		);
 
 		$level = error_reporting(0);
