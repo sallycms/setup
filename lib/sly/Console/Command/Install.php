@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use sly\Console\Command\Base;
+use wv\BabelCache\Cache\Blackhole;
 
 class sly_Console_Command_Install extends Base {
 	protected $availableDbOptions = null;
@@ -47,7 +48,7 @@ class sly_Console_Command_Install extends Base {
 		$container->getI18N()->appendFile(SLY_SALLYFOLDER.'/setup/lang');
 
 		// make sure there is no attempt to build a real cache
-		$container['sly-cache'] = new BabelCache_Blackhole();
+		$container['sly-cache'] = new Blackhole();
 
 		$output->writeln(array(
 			'System Check',
@@ -74,12 +75,12 @@ class sly_Console_Command_Install extends Base {
 			''
 		));
 
-		// write project configuration
-		$healthy = $this->writeConfig($input, $output, $container);
-		if (!$healthy) return 1;
-
 		// perform database setup
 		$healthy = $this->setupDatabase($input, $output, $container);
+		if (!$healthy) return 1;
+
+		// write project configuration
+		$healthy = $this->writeConfig($input, $output, $container);
 		if (!$healthy) return 1;
 
 		// create/update the admin user
@@ -327,7 +328,9 @@ class sly_Console_Command_Install extends Base {
 		$projectName = $input->getOption('name') ?: 'SallyCMS-Projekt';
 		$config      = $container->getConfig();
 
+		$persistence = $container['sly-persistence'];
 		$localWriter = $container['sly-config-writer'];
+		$localWriter->setPersistence($persistence);
 		$localWriter->writeLocal(array('database' => $this->databaseConfig));
 
 		$config->setStatic('database', $this->databaseConfig);
