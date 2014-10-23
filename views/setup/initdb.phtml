@@ -1,0 +1,60 @@
+<?php
+/*
+ * Copyright (c) 2014, webvariants GmbH & Co. KG, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'active' => 'initdb'));
+
+$first = reset($actions);
+
+?>
+<form class="form-horizontal" action="<?php print $_router->getUrl('database') ?>" method="post">
+	<fieldset>
+		<legend><?php print t('init_database') ?></legend>
+		<p><?php print t('init_database_help') ?></p>
+
+		<div class="span10 pull-right">
+			<?php foreach ($actions as $action): ?>
+			<label class="radio"><input type="radio" name="dbaction" value="<?php print $action ?>"<?php print $action === $first ? ' checked="checked" autofocus="autofocus"' : '' ?> /> <?php print t('db_action_'.$action) ?></label>
+			<?php endforeach ?>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend><?php print t('create_admin') ?></legend>
+		<p><?php print t('create_admin_help') ?></p>
+
+		<div class="control-group">
+			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
+			<div class="controls controls-row">
+				<input type="text" name="username" id="username" placeholder="admin" class="span3" required="required" />
+
+				<div class="input-append span3">
+					<input type="text" name="password" id="userpassword" placeholder="mypassword" required="required" />
+					<button class="btn" type="button" id="gen_password"><i class="icon-repeat"></i> <?php print t('generate') ?></button>
+				</div>
+			</div>
+		</div>
+
+		<?php if ($userExists): ?>
+		<div class="control-group">
+			<div class="controls span3">
+				<label class="checkbox">
+					<input type="checkbox" name="no_user" id="no_user" value="1" /> <?php print t('dont_create_user') ?>
+				</label>
+			</div>
+		</div>
+		<?php endif ?>
+
+		<?php print sly_Util_Setup::renderFlashMessage() ?>
+
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary"><?php print t('finish_setup') ?></button>
+		</div>
+	</fieldset>
+</form>
