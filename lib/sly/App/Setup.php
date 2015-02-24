@@ -33,9 +33,6 @@ class sly_App_Setup extends sly_App_Base {
 		// init request
 		$this->request = $container->getRequest();
 
-		// init the current language
-		$container->setCurrentLanguageId(sly_Core::getDefaultClangId());
-
 		// set timezone
 		$this->initTimezone();
 
@@ -107,30 +104,24 @@ class sly_App_Setup extends sly_App_Base {
 	protected function initLocale(sly_Container $container) {
 		sly_Util_Session::start();
 
-		// explicit locale in query string?
-		$request = $container->getRequest();
-		$locale  = $request->get('locale', 'string');
-		$locales = sly_I18N::getLocales(SLY_SALLYFOLDER.'/setup/lang');
+		// explicit locale in query string or already stored in session?
 		$session = $container->getSession();
+		$locales = sly_I18N::getLocales(SLY_SALLYFOLDER.'/setup/lang');
+		$locale  = $this->request->get('locale', 'string', $session->get('locale', 'string'));
 
+		// locale is still empty or not avalable?
 		if (empty($locale) || !in_array($locale, $locales)) {
-			// session locale?
-			$locale = $session->get('locale', 'string');
+			// create a map of locales including short locales
+			$localeMap = array_combine($locales, $locales);
 
-			if (empty($locale)) {
-				// get best locale based on Accept-Language header
-				$locale = sly_Core::getDefaultLocale();
-				$accept = $request->getLanguages();
-
-				foreach ($accept as $l) {
-					$l = strtolower($l);
-
-					if (in_array($l, $locales)) {
-						$locale = $l;
-						break;
-					}
-				}
+			foreach($locales as $l) {
+				$localeMap[mb_substr($l, 0, 2)] = $l;
 			}
+
+			// get the preferred language from the browser,
+			// or at least the first language from our map
+			$prefered = $this->request->getPreferredLanguage(array_keys($localeMap));
+			$locale   = $localeMap[$prefered];
 		}
 
 		// remember the chosen locale
