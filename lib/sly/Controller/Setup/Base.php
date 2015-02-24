@@ -26,17 +26,17 @@ abstract class sly_Controller_Setup_Base extends sly_Controller_Base {
 	 */
 	protected function render($filename, array $params = array(), $returnOutput = true) {
 		// make router available to all controller views
-		$router = $this->getContainer()->getApplication()->getRouter();
+		$router = $this->container->getApplication()->getRouter();
 		$params = array_merge(array('_router' => $router), $params);
 
 		return parent::render($filename, $params, $returnOutput);
 	}
 
 	protected function redirect($params = array(), $page = null, $code = 302) {
-		sly_Core::getCurrentApp()->redirect($page, $params, $code);
+		$this->container->getApplication()->redirect($page, $params, $code);
 	}
 
 	protected function redirectResponse($params = array(), $page = null, $code = 302) {
-		return sly_Core::getCurrentApp()->redirectResponse($page, $params, $code);
+		return $this->container->getApplication()->redirectResponse($page, $params, $code);
 	}
 }
