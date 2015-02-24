@@ -91,3 +91,4 @@ unknown_action: 'Methode {0} in {1} nicht gefunden!'
 database_server_too_old: "Der angegebene Datenbank-Server ist zu alt und inkompatibel mit Sally.\nEs wird mindestens Version {1} benötigt, es wurde aber {0} ermittelt."
 database_server_old_but_okay: "Der angegebene Datenbank-Server ist veraltet, aber noch kompatibel.\nVersion {1}+ wird empfohlen, es wurde aber {0} ermittelt."
 database_server_is_up_to_date: "Der angegebene Datenbank-Server ist auf dem aktuellen Stand (Version {0})."
+my_project: Mein Projekt
