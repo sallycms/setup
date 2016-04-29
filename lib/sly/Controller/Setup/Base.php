@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2014, webvariants GmbH & Co. KG, http://www.webvariants.de
+ * Copyright (c) 2016, webvariants GmbH & Co. KG, http://www.webvariants.de
  *
  * This file is released under the terms of the MIT license. You can find the
  * complete text in the attached LICENSE file or online at:
@@ -24,12 +24,15 @@ abstract class sly_Controller_Setup_Base extends sly_Controller_Base {
 	 * @param  boolean $returnOutput  set to false to not use an output buffer
 	 * @return string                 the generated output if $returnOutput, else null
 	 */
-	protected function render($filename, array $params = array(), $returnOutput = true) {
+	protected function render() {
 		// make router available to all controller views
-		$router = $this->container->getApplication()->getRouter();
-		$params = array_merge(array('_router' => $router), $params);
+		$args         = func_get_args();
+		$params       = isset($args[1]) ? $args[1] : array();
+		$returnOutput = isset($args[2]) ? $args[2] : true;
+		$router       = $this->getContainer()->getApplication()->getRouter();
+		$params       = array_merge(array('_router' => $router), $params);
 
-		return parent::render($filename, $params, $returnOutput);
+		return parent::render($args[0], $params, $returnOutput);
 	}
 
 	protected function redirect($params = array(), $page = null, $code = 302) {
