@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2014, webvariants GmbH & Co. KG, http://www.webvariants.de
+ * Copyright (c) 2016, webvariants GmbH & Co. KG, http://www.webvariants.de
  *
  * This file is released under the terms of the MIT license. You can find the
  * complete text in the attached LICENSE file or online at:
@@ -212,7 +212,7 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 
 	public function profitAction() {
 		if (($ret = $this->init(true, true)) !== true) return $ret;
-		$this->render('setup/profit.phtml', array('enabled' => array('index')), false);
+		$this->render('setup/profit.phtml', array('enabled' => array('profit')), false);
 	}
 
 	public function loginAction() {
@@ -278,38 +278,15 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$config    = $container->getConfig();
 		$db        = $container->getPersistence();
 		$prefix    = $config->get('database/table_prefix');
-		$params    = array('enabled' => array('index'));
+		$params    = array('enabled' => array('initdb'));
 		$params    = sly_Util_Setup::checkDatabaseTables($params, $prefix, $db);
 		$params    = sly_Util_Setup::checkUser($params, $prefix, $db);
+
 
 		$this->render('setup/initdb.phtml', $params, false);
 	}
 
 	protected function syscheckView(array $viewParams) {
 		$this->render('setup/syscheck.phtml', $viewParams, false);
-	}
-
-	protected function render($filename, array $params = array(), $returnOutput = true) {
-		// make router available to all controller views
-		$router = $this->getContainer()->getApplication()->getRouter();
-		$params = array_merge(array('_router' => $router), $params);
-
-		$container = $this->getContainer();
-		$config    = $container->getConfig();
-
-		if (sly_Util_Setup::checkDatabaseConnection($config->get('database'), false, true)) {
-			$params['enabled'][] = 'initdb';
-
-			$db     = $container->getPersistence();
-			$prefix = $config->get('database/table_prefix');
-			$info   = sly_Util_Setup::checkDatabaseTables(array(), $prefix, $db);
-			$info   = sly_Util_Setup::checkUser($info, $prefix, $db);
-
-			if ($info['userExists'] && in_array('nop', $info['actions'])) {
-				$params['enabled'][] = 'profit';
-			}
-		}
-
-		return parent::render($filename, $params, $returnOutput);
 	}
 }
