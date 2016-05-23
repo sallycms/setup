@@ -1,0 +1,123 @@
+<?php
+/*
+ * Copyright (c) 2014, webvariants GmbH & Co. KG, http://www.webvariants.de
+ *
+ * This file is released under the terms of the MIT license. You can find the
+ * complete text in the attached LICENSE file or online at:
+ *
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+print $this->render('layout/navigation.phtml', array('enabled' => $enabled, 'active' => 'index'));
+
+$badges = array(
+	sly_Util_Setup::getBadge($results['version'], 'PHP '.PHP_VERSION),
+	sly_Util_Setup::getBadge($results['time_limit']),
+	sly_Util_Setup::getBadge($results['mem_limit'])
+);
+
+$all       = array('mysql' => 'MySQL', 'sqlite' => 'SQLite', 'pgsql' => 'PostgreSQL', 'oci' => 'Oracle');
+$available = array();
+
+foreach ($all as $driver => $title) {
+	if (in_array($driver, $database['drivers'])) {
+		$available[$driver] = $title;
+	}
+}
+
+$multiDriver = count($available) > 1;
+$timezone    = sly_Util_Setup::getTimezoneSelect('timezone', $timezone);
+
+?>
+<form class="form-horizontal" action="<?php print $_router->getUrl('saveconfig') ?>" method="post">
+	<fieldset>
+		<legend><?php print t('welcome') ?></legend>
+		<p><?php print t('intro') ?></p>
+	</fieldset>
+
+	<fieldset>
+		<legend><?php print t('general_config') ?></legend>
+
+		<div class="control-group">
+			<label class="control-label" for="projectname"><?php print t('projectname') ?>:</label>
+			<div class="controls">
+				<input type="text" id="projectname" name="projectname" autofocus="autofocus" value="<?php print sly_html($projectName) ?>" placeholder="<?php print t('my_project') ?>" required="required" />
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="timezone"><?php print t('timezone') ?>:</label>
+			<div class="controls">
+				<?php print $timezone->render() ?>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<div class="controls">
+				<?php print implode("\n", $badges); ?>
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend><?php print t('database_access').($multiDriver ? '' : sprintf(' (%s)', reset($available))) ?></legend>
+
+		<?php if ($multiDriver || key($available) !== 'sqlite'): ?>
+		<div class="control-group">
+			<label class="control-label" for="host"><?php print t($multiDriver ? 'host_and_driver' : 'host') ?>:</label>
+			<div class="controls controls-row">
+				<input type="text" name="host" id="host" placeholder="localhost" class="span3" required="required" value="<?php print sly_html($database['host']) ?>" />
+
+				<?php if ($multiDriver): ?>
+				<div class="span3">
+					<select name="driver" id="driver" title="<?php print t('non_mysql_is_experimental') ?>" rel="tooltip" data-placement="right" data-trigger="focus" class="span2" tabindex="-1">
+						<?php foreach ($available as $key => $name): ?>
+						<option value="<?php print $key ?>"<?php print $key === $database['driver'] ? ' selected="selected"' : '' ?>><?php print $name ?></option>
+						<?php endforeach ?>
+					</select>
+				</div>
+				<?php endif ?>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="username"><?php print t('username_and_password') ?>:</label>
+			<div class="controls controls-row">
+				<input type="text" name="username" id="username" value="<?php print sly_html($database['username']) ?>" placeholder="username" required="required" class="span3" />
+				<input type="text" name="password" id="password" value="<?php print sly_html($database['password']) ?>" placeholder="mypassword" required="required" class="span3" />
+			</div>
+		</div>
+		<?php endif ?>
+
+		<?php if (!$multiDriver): ?>
+		<div><input type="hidden" name="driver" id="driver" value="<?php print key($available) ?>" /></div>
+		<?php endif ?>
+
+		<div class="control-group">
+			<label class="control-label" for="database"><?php print t('database') ?>:</label>
+			<div class="controls controls-row">
+				<div class="span3" style="margin-left:0" id="database-container">
+					<input type="text" name="database" id="database" value="<?php print sly_html($database['name']) ?>" class="span3" required="required" placeholder="mydatabase" />
+					<span class="add-on" style="display:none">.sq3</span>
+				</div>
+
+				<label class="checkbox span2">
+					<input type="checkbox" name="create" id="create" value="1" /> <?php print t('create') ?>
+				</label>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label" for="prefix"><?php print t('table_prefix') ?>:</label>
+			<div class="controls">
+				<input type="text" name="prefix" id="prefix" value="<?php print sly_html($database['prefix']) ?>" placeholder="sly_" class="span1" title="<?php print t('table_prefix_help') ?>" rel="tooltip" data-placement="right" data-trigger="focus" />
+			</div>
+		</div>
+
+		<?php print sly_Util_Setup::renderFlashMessage() ?>
+
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary"><?php print t('next_step') ?></button>
+		</div>
+	</fieldset>
+</form>
