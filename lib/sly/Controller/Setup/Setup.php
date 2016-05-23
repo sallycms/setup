@@ -289,10 +289,13 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$this->render('setup/syscheck.phtml', $viewParams, false);
 	}
 
-	protected function render($filename, array $params = array(), $returnOutput = true) {
+	protected function render() {
 		// make router available to all controller views
-		$router = $this->getContainer()->getApplication()->getRouter();
-		$params = array_merge(array('_router' => $router), $params);
+		$args         = func_get_args();
+		$params       = isset($args[1]) ? $args[1] : array();
+		$returnOutput = isset($args[2]) ? $args[2] : true;
+		$router       = $this->getContainer()->getApplication()->getRouter();
+		$params       = array_merge(array('_router' => $router), $params);
 
 		$container = $this->getContainer();
 		$config    = $container->getConfig();
@@ -310,6 +313,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			}
 		}
 
-		return parent::render($filename, $params, $returnOutput);
+		return parent::render($args[0], $params, $returnOutput);
 	}
 }
