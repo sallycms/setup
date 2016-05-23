@@ -108,9 +108,9 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$dbConfig = array(
 			'driver'       => $request->post('driver', 'string', 'mysql'),
 			'host'         => $request->post('host', 'string', 'localhost'),
-			'login'        => $request->post('username', 'string', ''),
+			'user'         => $request->post('username', 'string', ''),
 			'password'     => $request->post('password', 'string', ''),
-			'name'         => $request->post('database', 'string', ''),
+			'dbname'       => $request->post('database', 'string', ''),
 			'table_prefix' => $request->post('prefix', 'string', 'sly_')
 		);
 
@@ -261,9 +261,9 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 			'database'    => array(
 				'driver'   => $database['driver'],
 				'host'     => $database['host'],
-				'username' => $database['login'],
+				'username' => $database['user'],
 				'password' => $database['password'],
-				'name'     => $database['name'],
+				'name'     => $database['dbname'],
 				'prefix'   => $database['table_prefix'],
 				'drivers'  => sly_DB_PDO_Driver::getAvailable()
 			)
