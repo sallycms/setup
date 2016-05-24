@@ -282,7 +282,6 @@ class sly_Controller_Setup_Setup extends sly_Controller_Setup_Base implements sl
 		$params    = sly_Util_Setup::checkDatabaseTables($params, $prefix, $db);
 		$params    = sly_Util_Setup::checkUser($params, $prefix, $db);
 
-
 		$this->render('setup/initdb.phtml', $params, false);
 	}
 
